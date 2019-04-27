@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">HiVo</string>
+    <string name="record_button">Record button</string>
 </resources>
