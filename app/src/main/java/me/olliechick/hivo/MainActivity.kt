@@ -8,12 +8,16 @@ import android.animation.AnimatorInflater
 import android.animation.ValueAnimator
 import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.GradientDrawable
+import java.text.SimpleDateFormat
+import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
 
     private var isRecording = false
     private lateinit var valueAnimator: ValueAnimator
+    private lateinit var timeFormat: SimpleDateFormat
+    private lateinit var timeFormatWithAmPm: SimpleDateFormat
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,15 +35,33 @@ class MainActivity : AppCompatActivity() {
             gradientDrawable.cornerRadius = progress
             recordButton.setImageDrawable(layerDrawable)
         }
+
+        val locale: Locale = resources.configuration.locales[0]
+        timeFormat = SimpleDateFormat("h:mm", locale)
+        timeFormatWithAmPm = SimpleDateFormat("HH:mm z", locale)
     }
 
     fun recordClicked(v: View) {
         if (isRecording) {
-            valueAnimator.reverse()
             isRecording = false
+
+            valueAnimator.reverse()
+
+            bufferLinearLayout.visibility = View.VISIBLE
+            saveButton.visibility = View.GONE
+            timeLinearLayout.visibility = View.INVISIBLE
         } else {
-            valueAnimator.start()
             isRecording = true
+
+            valueAnimator.start()
+
+            bufferLinearLayout.visibility = View.GONE
+            saveButton.visibility = View.VISIBLE
+            timeLinearLayout.visibility = View.VISIBLE
+
+            val currentTime = timeFormat.format(Date())
+            startTimeText.text = currentTime
+            currentTimeText.format12Hour = "K:m"
         }
     }
 

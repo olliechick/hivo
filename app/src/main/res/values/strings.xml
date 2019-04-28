@@ -3,4 +3,5 @@
     <string name="record_button">Record button</string>
     <string name="buffer">Buffer:</string>
     <string name="minutes">minutes</string>
+    <string name="save">Save</string>
 </resources>
