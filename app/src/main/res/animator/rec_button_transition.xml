@@ -1,5 +1,0 @@
-<animator xmlns:android="http://schemas.android.com/apk/res/android"
-    android:valueTo="10"
-    android:valueFrom="100"
-    android:valueType="floatType"
-    android:repeatMode="reverse"/>
