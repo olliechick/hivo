@@ -1,149 +1,160 @@
 package nz.co.olliechick.hivo
 
-import android.content.pm.PackageManager
-import android.media.MediaPlayer
+import android.media.AudioFormat
+import android.media.AudioRecord
 import android.media.MediaRecorder
-import android.os.Environment
-import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
+import android.os.Environment
+import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.widget.Button
-import android.widget.Toast
-import java.io.IOException
-import android.Manifest.permission.RECORD_AUDIO
-import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-import kotlinx.android.synthetic.main.activity_main.*
 
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.nio.ByteBuffer
+import java.util.concurrent.atomic.AtomicBoolean
+
+/**
+ * Sample that demonstrates how to record a device's microphone using [AudioRecord].
+ */
 class MainActivity : AppCompatActivity() {
-    private var startbtn: Button? = null
-    private var stopbtn: Button? = null
-    private var playbtn: Button? = null
-    private var stopplay: Button? = null
-    private var mRecorder: MediaRecorder? = null
-    private var mPlayer: MediaPlayer? = null
-    override fun onCreate(savedInstanceState: Bundle?) {
+
+    /**
+     * Signals whether a recording is in progress (true) or not (false).
+     */
+    private val recordingInProgress = AtomicBoolean(false)
+
+    private var recorder: AudioRecord? = null
+
+    private var recordingThread: Thread? = null
+
+    private var startButton: Button? = null
+
+    private var stopButton: Button? = null
+
+    public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        startbtn = findViewById<View>(R.id.btnRecord) as Button
-        stopbtn = findViewById<View>(R.id.btnStop) as Button
-        playbtn = findViewById<View>(R.id.btnPlay) as Button
-        stopplay = findViewById<View>(R.id.btnStopPlay) as Button
-        stopbtn!!.isEnabled = false
-        playbtn!!.isEnabled = false
-        stopplay!!.isEnabled = false
-        mFileName = Environment.getExternalStorageDirectory().absolutePath
-        mFileName += "/AudioRecording.3gp"
 
-        fun stopRec() {
-            mRecorder!!.stop()
+        startButton = findViewById(R.id.btnStart) as Button
+        startButton!!.setOnClickListener {
+            startRecording()
+            startButton!!.isEnabled = false
+            stopButton!!.isEnabled = true
         }
 
-        fun startRec(filename: String) {
-            mRecorder!!.setOutputFile(filename)
-            try {
-                mRecorder!!.prepare()
-            } catch (e: IOException) {
-                Log.e(LOG_TAG, "prepare() failed")
-            }
-
-            mRecorder!!.start()
-
-        }
-
-        startbtn!!.setOnClickListener {
-            if (CheckPermissions()) {
-
-                stopbtn!!.isEnabled = true
-                startbtn!!.isEnabled = false
-                playbtn!!.isEnabled = false
-                stopplay!!.isEnabled = false
-                mRecorder = MediaRecorder()
-                mRecorder!!.setAudioSource(MediaRecorder.AudioSource.MIC)
-                mRecorder!!.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-                mRecorder!!.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-                startRec(mFileName!!)
-                Toast.makeText(applicationContext, "Recording Started", Toast.LENGTH_LONG).show()
-            } else {
-                RequestPermissions()
-            }
-        }
-        stopbtn!!.setOnClickListener {
-
-            stopbtn!!.isEnabled = false
-            startbtn!!.isEnabled = true
-            playbtn!!.isEnabled = true
-            stopplay!!.isEnabled = true
-            stopRec()
-
-            mRecorder!!.release()
-            mRecorder = null
-            Toast.makeText(applicationContext, "Recording Stopped", Toast.LENGTH_LONG).show()
-        }
-        btnStopStart!!.setOnClickListener {
-            stopRec()
-            startRec( Environment.getExternalStorageDirectory().absolutePath + "/AudioRecording2.3gp")
-            Toast.makeText(applicationContext, "Recording Stopped and started", Toast.LENGTH_LONG).show()
-        }
-        playbtn!!.setOnClickListener {
-            stopbtn!!.isEnabled = false
-            startbtn!!.isEnabled = true
-            playbtn!!.isEnabled = false
-            stopplay!!.isEnabled = true
-            mPlayer = MediaPlayer()
-            try {
-                mPlayer!!.setDataSource(mFileName)
-                mPlayer!!.prepare()
-                mPlayer!!.start()
-                Toast.makeText(applicationContext, "Recording Started Playing", Toast.LENGTH_LONG).show()
-            } catch (e: IOException) {
-                Log.e(LOG_TAG, "prepare() failed")
-            }
-        }
-        stopplay!!.setOnClickListener {
-            mPlayer!!.release()
-            mPlayer = null
-            stopbtn!!.isEnabled = false
-            startbtn!!.isEnabled = true
-            playbtn!!.isEnabled = true
-            stopplay!!.isEnabled = false
-            Toast.makeText(applicationContext, "Playing Audio Stopped", Toast.LENGTH_SHORT).show()
+        stopButton = findViewById<View>(R.id.btnStop) as Button
+        stopButton!!.setOnClickListener {
+            stopRecording()
+            startButton!!.isEnabled = true
+            stopButton!!.isEnabled = false
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        when (requestCode) {
-            REQUEST_AUDIO_PERMISSION_CODE -> if (grantResults.size > 0) {
-                val permissionToRecord = grantResults[0] == PackageManager.PERMISSION_GRANTED
-                val permissionToStore = grantResults[1] == PackageManager.PERMISSION_GRANTED
-                if (permissionToRecord && permissionToStore) {
-                    Toast.makeText(applicationContext, "Permission Granted", Toast.LENGTH_LONG).show()
-                } else {
-                    Toast.makeText(applicationContext, "Permission Denied", Toast.LENGTH_LONG).show()
-                }
-            }
-        }
+    override fun onResume() {
+        super.onResume()
+
+        startButton!!.isEnabled = true
+        stopButton!!.isEnabled = false
     }
 
-    fun CheckPermissions(): Boolean {
-        val result = ContextCompat.checkSelfPermission(applicationContext, WRITE_EXTERNAL_STORAGE)
-        val result1 = ContextCompat.checkSelfPermission(applicationContext, RECORD_AUDIO)
-        return result == PackageManager.PERMISSION_GRANTED && result1 == PackageManager.PERMISSION_GRANTED
+    override fun onPause() {
+        super.onPause()
+
+        stopRecording()
     }
 
-    private fun RequestPermissions() {
-        ActivityCompat.requestPermissions(
-            this@MainActivity,
-            arrayOf(RECORD_AUDIO, WRITE_EXTERNAL_STORAGE),
-            REQUEST_AUDIO_PERMISSION_CODE
+    private fun startRecording() {
+        recorder = AudioRecord(
+            MediaRecorder.AudioSource.DEFAULT, SAMPLING_RATE_IN_HZ,
+            CHANNEL_CONFIG, AUDIO_FORMAT, BUFFER_SIZE
         )
+
+        recorder!!.startRecording()
+
+        recordingInProgress.set(true)
+
+        recordingThread = Thread(RecordingRunnable(), "Recording Thread")
+        recordingThread!!.start()
+    }
+
+    private fun stopRecording() {
+        if (null == recorder) {
+            return
+        }
+
+        recordingInProgress.set(false)
+
+        recorder!!.stop()
+
+        recorder!!.release()
+
+        recorder = null
+
+        recordingThread = null
+    }
+
+    private inner class RecordingRunnable : Runnable {
+
+        override fun run() {
+            val file = File(Environment.getExternalStorageDirectory(), "recording.pcm")
+            val buffer = ByteBuffer.allocateDirect(BUFFER_SIZE)
+
+            try {
+                FileOutputStream(file).use { outStream ->
+                    while (recordingInProgress.get()) {
+                        val result = recorder!!.read(buffer, BUFFER_SIZE)
+                        if (result < 0) {
+                            throw RuntimeException(
+                                "Reading of audio buffer failed: " + getBufferReadFailureReason(
+                                    result
+                                )
+                            )
+                        }
+                        outStream.write(buffer.array(), 0, BUFFER_SIZE)
+                        buffer.clear()
+                    }
+                }
+            } catch (e: IOException) {
+                throw RuntimeException("Writing of recorded audio failed", e)
+            }
+
+        }
+
+        private fun getBufferReadFailureReason(errorCode: Int): String {
+            when (errorCode) {
+                AudioRecord.ERROR_INVALID_OPERATION -> return "ERROR_INVALID_OPERATION"
+                AudioRecord.ERROR_BAD_VALUE -> return "ERROR_BAD_VALUE"
+                AudioRecord.ERROR_DEAD_OBJECT -> return "ERROR_DEAD_OBJECT"
+                AudioRecord.ERROR -> return "ERROR"
+                else -> return "Unknown ($errorCode)"
+            }
+        }
     }
 
     companion object {
-        private val LOG_TAG = "AudioRecording"
-        private var mFileName: String? = null
-        val REQUEST_AUDIO_PERMISSION_CODE = 1
+
+        private const val SAMPLING_RATE_IN_HZ = 44100
+
+        private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
+
+        private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
+
+        /**
+         * Factor by that the minimum buffer size is multiplied. The bigger the factor is the less
+         * likely it is that samples will be dropped, but more memory will be used. The minimum buffer
+         * size is determined by [AudioRecord.getMinBufferSize] and depends on the
+         * recording settings.
+         */
+        private const val BUFFER_SIZE_FACTOR = 2
+
+        /**
+         * Size of the buffer where the audio data is stored by Android
+         */
+        private val BUFFER_SIZE = AudioRecord.getMinBufferSize(
+            SAMPLING_RATE_IN_HZ,
+            CHANNEL_CONFIG, AUDIO_FORMAT
+        ) * BUFFER_SIZE_FACTOR
     }
 }
