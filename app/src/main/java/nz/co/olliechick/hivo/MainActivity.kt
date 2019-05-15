@@ -38,25 +38,10 @@ class MainActivity : AppCompatActivity() {
         mFileName += "/AudioRecording.3gp"
 
         fun stopRec() {
-
-            stopbtn!!.isEnabled = false
-            startbtn!!.isEnabled = true
-            playbtn!!.isEnabled = true
-            stopplay!!.isEnabled = true
             mRecorder!!.stop()
-            mRecorder!!.release()
-            mRecorder = null
         }
 
         fun startRec(filename: String) {
-            stopbtn!!.isEnabled = true
-            startbtn!!.isEnabled = false
-            playbtn!!.isEnabled = false
-            stopplay!!.isEnabled = false
-            mRecorder = MediaRecorder()
-            mRecorder!!.setAudioSource(MediaRecorder.AudioSource.MIC)
-            mRecorder!!.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-            mRecorder!!.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
             mRecorder!!.setOutputFile(filename)
             try {
                 mRecorder!!.prepare()
@@ -70,6 +55,15 @@ class MainActivity : AppCompatActivity() {
 
         startbtn!!.setOnClickListener {
             if (CheckPermissions()) {
+
+                stopbtn!!.isEnabled = true
+                startbtn!!.isEnabled = false
+                playbtn!!.isEnabled = false
+                stopplay!!.isEnabled = false
+                mRecorder = MediaRecorder()
+                mRecorder!!.setAudioSource(MediaRecorder.AudioSource.MIC)
+                mRecorder!!.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+                mRecorder!!.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
                 startRec(mFileName!!)
                 Toast.makeText(applicationContext, "Recording Started", Toast.LENGTH_LONG).show()
             } else {
@@ -77,7 +71,15 @@ class MainActivity : AppCompatActivity() {
             }
         }
         stopbtn!!.setOnClickListener {
+
+            stopbtn!!.isEnabled = false
+            startbtn!!.isEnabled = true
+            playbtn!!.isEnabled = true
+            stopplay!!.isEnabled = true
             stopRec()
+
+            mRecorder!!.release()
+            mRecorder = null
             Toast.makeText(applicationContext, "Recording Stopped", Toast.LENGTH_LONG).show()
         }
         btnStopStart!!.setOnClickListener {
