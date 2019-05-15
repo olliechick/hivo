@@ -1,19 +1,24 @@
 package nz.co.olliechick.hivo
 
-import android.media.AudioFormat
-import android.media.AudioRecord
-import android.media.MediaRecorder
+import android.media.*
 import android.os.Bundle
 import android.os.Environment
 import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.widget.Button
+import kotlinx.android.synthetic.main.activity_main.*
+import org.jetbrains.anko.toast
 
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
+import android.media.AudioTrack
+import java.io.*
+import android.media.AudioFormat.CHANNEL_OUT_STEREO
+import android.media.AudioFormat.ENCODING_PCM_16BIT
+import android.media.AudioAttributes
+
+
+
 
 /**
  * Sample that demonstrates how to record a device's microphone using [AudioRecord].
@@ -50,22 +55,27 @@ class MainActivity : AppCompatActivity() {
             startButton!!.isEnabled = true
             stopButton!!.isEnabled = false
         }
+
+        btnStream.setOnClickListener {
+            playRecord(Environment.getExternalStorageDirectory(), "recording.pcm")
+        }
     }
 
     override fun onResume() {
         super.onResume()
 
         startButton!!.isEnabled = true
-        stopButton!!.isEnabled = false
+        stopButton!!.isEnabled = true
     }
 
     override fun onPause() {
         super.onPause()
 
-        stopRecording()
+//        stopRecording()
     }
 
     private fun startRecording() {
+        toast("starting recording")
         recorder = AudioRecord(
             MediaRecorder.AudioSource.DEFAULT, SAMPLING_RATE_IN_HZ,
             CHANNEL_CONFIG, AUDIO_FORMAT, BUFFER_SIZE
@@ -80,6 +90,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun stopRecording() {
+        toast("stopping recording")
         if (null == recorder) {
             return
         }
@@ -93,6 +104,89 @@ class MainActivity : AppCompatActivity() {
         recorder = null
 
         recordingThread = null
+    }
+
+    private fun playRecord(filepath: File, filename: String) {
+
+        var audioTrack: AudioTrack? = null
+
+        val file = File(filepath, filename)
+
+        val shortSizeInBytes = java.lang.Short.SIZE / java.lang.Byte.SIZE
+
+        val bufferSizeInBytes = (file.length() / shortSizeInBytes).toInt()
+
+        val audioData = ShortArray(bufferSizeInBytes)
+
+        try {
+            val inputStream = FileInputStream(file)
+            val bufferedInputStream = BufferedInputStream(inputStream)
+            val dataInputStream = DataInputStream(bufferedInputStream)
+
+            var j = 0
+            while (dataInputStream.available() > 0) {
+                audioData[j] = dataInputStream.readShort()
+                j++
+
+            }
+
+            dataInputStream.close()
+
+//            val player = AudioTrack.Builder()
+//                .setAudioAttributes(
+//                    AudioAttributes.Builder()
+//                        .setUsage(AudioAttributes.USAGE_ALARM)
+//                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+//                        .build()
+//                )
+//                .setAudioFormat(
+//                    AudioFormat.Builder()
+//                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+//                        .setSampleRate(44100)
+//                        .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+//                        .build()
+//                )
+//                .setBufferSizeInBytes(minBuffSize)
+//                .build()
+
+
+            audioTrack = AudioTrack(
+                AudioManager.STREAM_MUSIC,
+                44100,
+                AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT,
+                bufferSizeInBytes,
+                AudioTrack.MODE_STREAM
+            )
+
+            audioTrack.play()
+            audioTrack.write(audioData, 0, bufferSizeInBytes)
+
+
+        } catch (e: FileNotFoundException) {
+            e.printStackTrace()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+
+    }
+
+    private fun stream() {
+        var bufsize = AudioTrack.getMinBufferSize(
+            44100,
+            AudioFormat.CHANNEL_OUT_STEREO,
+            AudioFormat.ENCODING_PCM_16BIT
+        )
+
+        var audio = AudioTrack(
+            AudioManager.STREAM_MUSIC,
+            44100, //sample rate
+            AudioFormat.CHANNEL_OUT_STEREO, //2 channel
+            AudioFormat.ENCODING_PCM_16BIT, // 16-bit
+            bufsize,
+            AudioTrack.MODE_STREAM
+        )
+        audio.play()
     }
 
     private inner class RecordingRunnable : Runnable {
