@@ -1,5 +1,6 @@
 package nz.co.olliechick.hivo
 
+import android.Manifest
 import android.media.*
 import android.os.Bundle
 import android.os.Environment
@@ -7,15 +8,19 @@ import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.widget.Button
 import kotlinx.android.synthetic.main.activity_main.*
-import org.jetbrains.anko.toast
 
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 import android.media.AudioTrack
 import java.io.*
-import android.media.AudioFormat.CHANNEL_OUT_STEREO
-import android.media.AudioFormat.ENCODING_PCM_16BIT
-import android.media.AudioAttributes
+import android.media.AudioRecord
+import android.media.MediaRecorder
+import android.support.v4.app.ActivityCompat
+import android.content.pm.PackageManager
+import android.os.Build
+import android.util.Log
+import android.widget.Toast
+import android.media.AudioManager
 
 
 
@@ -42,7 +47,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        startButton = findViewById(R.id.btnStart) as Button
+        checkPermissions(arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+
+        startButton = findViewById<View>(R.id.btnStart) as Button
         startButton!!.setOnClickListener {
             startRecording()
             startButton!!.isEnabled = false
@@ -57,25 +64,27 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnStream.setOnClickListener {
-            playRecord(Environment.getExternalStorageDirectory(), "recording.pcm")
+            streamFile()
         }
     }
 
     override fun onResume() {
         super.onResume()
+        Log.i("hivo", "onResume")
 
         startButton!!.isEnabled = true
-        stopButton!!.isEnabled = true
+        stopButton!!.isEnabled = false
     }
 
     override fun onPause() {
         super.onPause()
 
-//        stopRecording()
+        stopRecording()
     }
 
     private fun startRecording() {
-        toast("starting recording")
+        Log.i("hivo", "triggered start recording")
+        Log.i("hivo", "we have permission")
         recorder = AudioRecord(
             MediaRecorder.AudioSource.DEFAULT, SAMPLING_RATE_IN_HZ,
             CHANNEL_CONFIG, AUDIO_FORMAT, BUFFER_SIZE
@@ -87,10 +96,46 @@ class MainActivity : AppCompatActivity() {
 
         recordingThread = Thread(RecordingRunnable(), "Recording Thread")
         recordingThread!!.start()
+
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 402) {
+            if (PackageManager.PERMISSION_DENIED in grantResults) {
+                Toast.makeText(this, "You will have to grant permissions to be able to record.", Toast.LENGTH_SHORT)
+                    .show()
+                finishAffinity()
+            } else {
+                startRecording()
+            }
+        }
+    }
+
+    /*
+     * If we don't have the permissions we need, gets them asynchronously and returns false.
+     * If we do, returns true.
+     */
+    private fun checkPermissions(permissions: Array<String>): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true
+
+        val permissionsToGet = arrayListOf<String>()
+
+        permissions.forEach { permission ->
+            if (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED)
+                permissionsToGet.add(permission)
+        }
+
+        Log.i("hivo", "we have to request ${permissionsToGet.size} permissions")
+
+        return if (permissionsToGet.isEmpty()) true
+        else {
+            ActivityCompat.requestPermissions(this, permissionsToGet.toTypedArray(), 402)
+            false
+        }
     }
 
     private fun stopRecording() {
-        toast("stopping recording")
         if (null == recorder) {
             return
         }
@@ -106,87 +151,37 @@ class MainActivity : AppCompatActivity() {
         recordingThread = null
     }
 
-    private fun playRecord(filepath: File, filename: String) {
-
-        var audioTrack: AudioTrack? = null
-
-        val file = File(filepath, filename)
-
-        val shortSizeInBytes = java.lang.Short.SIZE / java.lang.Byte.SIZE
-
-        val bufferSizeInBytes = (file.length() / shortSizeInBytes).toInt()
-
-        val audioData = ShortArray(bufferSizeInBytes)
-
+    private fun streamFile() {
+        // read file
+        var byteData: ByteArray? = null
+        val file = File(Environment.getExternalStorageDirectory(), "recording.pcm")
+        byteData = ByteArray(file.length().toInt())
+        val inputStream: FileInputStream?
         try {
-            val inputStream = FileInputStream(file)
-            val bufferedInputStream = BufferedInputStream(inputStream)
-            val dataInputStream = DataInputStream(bufferedInputStream)
-
-            var j = 0
-            while (dataInputStream.available() > 0) {
-                audioData[j] = dataInputStream.readShort()
-                j++
-
-            }
-
-            dataInputStream.close()
-
-//            val player = AudioTrack.Builder()
-//                .setAudioAttributes(
-//                    AudioAttributes.Builder()
-//                        .setUsage(AudioAttributes.USAGE_ALARM)
-//                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-//                        .build()
-//                )
-//                .setAudioFormat(
-//                    AudioFormat.Builder()
-//                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-//                        .setSampleRate(44100)
-//                        .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
-//                        .build()
-//                )
-//                .setBufferSizeInBytes(minBuffSize)
-//                .build()
-
-
-            audioTrack = AudioTrack(
-                AudioManager.STREAM_MUSIC,
-                44100,
-                AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_16BIT,
-                bufferSizeInBytes,
-                AudioTrack.MODE_STREAM
-            )
-
-            audioTrack.play()
-            audioTrack.write(audioData, 0, bufferSizeInBytes)
-
-
+            inputStream = FileInputStream(file)
+            inputStream.read(byteData)
+            inputStream.close()
         } catch (e: FileNotFoundException) {
-            e.printStackTrace()
-        } catch (e: IOException) {
-            e.printStackTrace()
+            Toast.makeText(this, "No file found...", Toast.LENGTH_SHORT).show()
         }
 
-    }
+        val audioRate = 44100
+        val bufsize =
+            AudioTrack.getMinBufferSize(audioRate, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT)
 
-    private fun stream() {
-        var bufsize = AudioTrack.getMinBufferSize(
-            44100,
-            AudioFormat.CHANNEL_OUT_STEREO,
-            AudioFormat.ENCODING_PCM_16BIT
-        )
-
-        var audio = AudioTrack(
+        val audio = AudioTrack(
             AudioManager.STREAM_MUSIC,
-            44100, //sample rate
-            AudioFormat.CHANNEL_OUT_STEREO, //2 channel
-            AudioFormat.ENCODING_PCM_16BIT, // 16-bit
+            audioRate,
+            AudioFormat.CHANNEL_OUT_STEREO,
+            AudioFormat.ENCODING_PCM_16BIT,
             bufsize,
             AudioTrack.MODE_STREAM
         )
+
         audio.play()
+        audio.write(byteData, 0, byteData.size)
+        audio.stop()
+        audio.release()
     }
 
     private inner class RecordingRunnable : Runnable {
@@ -229,11 +224,11 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
 
-        private const val SAMPLING_RATE_IN_HZ = 44100
+        private val SAMPLING_RATE_IN_HZ = 44100
 
-        private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
+        private val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
 
-        private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
+        private val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
 
         /**
          * Factor by that the minimum buffer size is multiplied. The bigger the factor is the less
@@ -241,7 +236,7 @@ class MainActivity : AppCompatActivity() {
          * size is determined by [AudioRecord.getMinBufferSize] and depends on the
          * recording settings.
          */
-        private const val BUFFER_SIZE_FACTOR = 2
+        private val BUFFER_SIZE_FACTOR = 2
 
         /**
          * Size of the buffer where the audio data is stored by Android
