@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity() {
 
     private var stopButton: Button? = null
 
-    public override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -87,7 +87,7 @@ class MainActivity : AppCompatActivity() {
         Log.i("hivo", "we have permission")
         recorder = AudioRecord(
             MediaRecorder.AudioSource.DEFAULT, SAMPLING_RATE_IN_HZ,
-            CHANNEL_CONFIG, AUDIO_FORMAT, BUFFER_SIZE
+            CHANNEL_IN_CONFIG, AUDIO_FORMAT, BUFFER_SIZE
         )
 
         recorder!!.startRecording()
@@ -165,15 +165,13 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "No file found...", Toast.LENGTH_SHORT).show()
         }
 
-        val audioRate = 44100
-        val bufsize =
-            AudioTrack.getMinBufferSize(audioRate, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT)
+        val bufsize = AudioTrack.getMinBufferSize(SAMPLING_RATE_IN_HZ, CHANNEL_OUT_CONFIG, AUDIO_FORMAT)
 
         val audio = AudioTrack(
             AudioManager.STREAM_MUSIC,
-            audioRate,
-            AudioFormat.CHANNEL_OUT_STEREO,
-            AudioFormat.ENCODING_PCM_16BIT,
+            SAMPLING_RATE_IN_HZ,
+            CHANNEL_OUT_CONFIG,
+            AUDIO_FORMAT,
             bufsize,
             AudioTrack.MODE_STREAM
         )
@@ -226,7 +224,8 @@ class MainActivity : AppCompatActivity() {
 
         private val SAMPLING_RATE_IN_HZ = 44100
 
-        private val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
+        private val CHANNEL_IN_CONFIG = AudioFormat.CHANNEL_IN_STEREO
+        private val CHANNEL_OUT_CONFIG = AudioFormat.CHANNEL_OUT_STEREO
 
         private val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
 
@@ -243,7 +242,7 @@ class MainActivity : AppCompatActivity() {
          */
         private val BUFFER_SIZE = AudioRecord.getMinBufferSize(
             SAMPLING_RATE_IN_HZ,
-            CHANNEL_CONFIG, AUDIO_FORMAT
+            CHANNEL_IN_CONFIG, AUDIO_FORMAT
         ) * BUFFER_SIZE_FACTOR
     }
 }
