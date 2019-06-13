@@ -12,7 +12,6 @@ import android.os.Bundle
 import android.os.Environment
 import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.Toast
@@ -83,7 +82,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        Log.i("hivo", "onResume")
 
         startButton!!.isEnabled = true
         stopButton!!.isEnabled = false
@@ -96,8 +94,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startRecording() {
-        Log.i("hivo", "triggered start recording")
-        Log.i("hivo", "we have permission")
         recorder = AudioRecord(
             MediaRecorder.AudioSource.DEFAULT, SAMPLING_RATE_IN_HZ,
             CHANNEL_IN_CONFIG, AUDIO_FORMAT, BUFFER_SIZE
@@ -138,8 +134,6 @@ class MainActivity : AppCompatActivity() {
             if (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED)
                 permissionsToGet.add(permission)
         }
-
-        Log.i("hivo", "we have to request ${permissionsToGet.size} permissions")
 
         return if (permissionsToGet.isEmpty()) true
         else {
