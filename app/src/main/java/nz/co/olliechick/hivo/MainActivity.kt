@@ -46,6 +46,7 @@ class MainActivity : AppCompatActivity() {
     private var stopButton: Button? = null
 
     private lateinit var audio: AudioTrack
+    private var inputStream: FileInputStream? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,8 +71,6 @@ class MainActivity : AppCompatActivity() {
         btnPlayPause.setOnClickListener {
             if (playbackInProgress) {
                 stopFile()
-                btnPlayPause.text = "Play file"
-                playbackInProgress = false
             } else {
                 playFile()
                 btnPlayPause.text = "Stop file"
@@ -175,7 +174,6 @@ class MainActivity : AppCompatActivity() {
             val file = File(Environment.getExternalStorageDirectory(), "recording.pcm")
             val count = 512 * 1024 // 512 kb
             val byteData = ByteArray(count)
-            val inputStream: FileInputStream?
             try {
                 inputStream = FileInputStream(file)
             } catch (e: FileNotFoundException) {
@@ -198,30 +196,35 @@ class MainActivity : AppCompatActivity() {
             )
 
             var bytesread = 0
-            var ret: Int
+            var ret: Int?
             val size = file.length().toInt()
             audio.play()
             while (bytesread < size) {
-                ret = inputStream.read(byteData, 0, count)
-                if (ret != -1 && audio.state == AudioTrack.STATE_INITIALIZED) {
-                    // Write the byte array to the track
-                    audio.write(byteData, 0, ret)
-                    bytesread += ret
+                if (inputStream != null && audio.state == AudioTrack.STATE_INITIALIZED) {
+                    ret = inputStream?.read(byteData, 0, count)
+                    if (ret != null && ret != -1) {
+                        // Write the byte array to the track
+                        audio.write(byteData, 0, ret)
+                        bytesread += ret
 
-                } else
-                    break
+                    } else break
+                } else break
             }
-            inputStream.close()
-            audio.stop()
-            audio.release()
-
+            uiThread {
+                stopFile()
+            }
         }
     }
 
     private fun stopFile() {
         toast("Stopping...")
+        inputStream?.close()
+        inputStream = null
         audio.stop()
         audio.release()
+
+        btnPlayPause.text = "Play file"
+        playbackInProgress = false
     }
 
 
