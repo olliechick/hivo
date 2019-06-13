@@ -17,8 +17,8 @@
             android:id="@+id/btnStop"/>
 
     <Button
-            android:text="Stream the file"
+            android:text="Play the file"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/btnStream"/>
+            android:id="@+id/btnPlayPause"/>
 </LinearLayout>

@@ -1,28 +1,28 @@
 package nz.co.olliechick.hivo
 
 import android.Manifest
-import android.media.*
+import android.content.pm.PackageManager
+import android.media.AudioFormat
+import android.media.AudioManager
+import android.media.AudioRecord
+import android.media.AudioTrack
+import android.media.MediaRecorder
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
-
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.toast
+import org.jetbrains.anko.uiThread
+import java.io.*
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
-import android.media.AudioTrack
-import java.io.*
-import android.media.AudioRecord
-import android.media.MediaRecorder
-import android.support.v4.app.ActivityCompat
-import android.content.pm.PackageManager
-import android.os.Build
-import android.util.Log
-import android.widget.Toast
-import android.media.AudioManager
-
-
 
 
 /**
@@ -35,6 +35,8 @@ class MainActivity : AppCompatActivity() {
      */
     private val recordingInProgress = AtomicBoolean(false)
 
+    private var playbackInProgress = false
+
     private var recorder: AudioRecord? = null
 
     private var recordingThread: Thread? = null
@@ -42,6 +44,8 @@ class MainActivity : AppCompatActivity() {
     private var startButton: Button? = null
 
     private var stopButton: Button? = null
+
+    private lateinit var audio: AudioTrack
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,10 +67,20 @@ class MainActivity : AppCompatActivity() {
             stopButton!!.isEnabled = false
         }
 
-        btnStream.setOnClickListener {
-            streamFile()
+        btnPlayPause.setOnClickListener {
+            if (playbackInProgress) {
+                stopFile()
+                btnPlayPause.text = "Play file"
+                playbackInProgress = false
+            } else {
+                playFile()
+                btnPlayPause.text = "Stop file"
+                playbackInProgress = true
+            }
+
         }
     }
+
 
     override fun onResume() {
         super.onResume()
@@ -151,36 +165,65 @@ class MainActivity : AppCompatActivity() {
         recordingThread = null
     }
 
-    private fun streamFile() {
-        // read file
-        var byteData: ByteArray? = null
-        val file = File(Environment.getExternalStorageDirectory(), "recording.pcm")
-        byteData = ByteArray(file.length().toInt())
-        val inputStream: FileInputStream?
-        try {
-            inputStream = FileInputStream(file)
-            inputStream.read(byteData)
+    /**
+     * Adapted from https://jongladwin.blogspot.com/2010/03/android-play-pcmwav-audio-buffer-using.html
+     */
+    private fun playFile() {
+        doAsync {
+
+            // read file
+            val file = File(Environment.getExternalStorageDirectory(), "recording.pcm")
+            val count = 512 * 1024 // 512 kb
+            val byteData = ByteArray(count)
+            val inputStream: FileInputStream?
+            try {
+                inputStream = FileInputStream(file)
+            } catch (e: FileNotFoundException) {
+                uiThread {
+                    toast("No file found...")
+                }
+                return@doAsync
+            }
+
+            val bufferSize = AudioTrack.getMinBufferSize(SAMPLING_RATE_IN_HZ, CHANNEL_OUT_CONFIG, AUDIO_FORMAT)
+
+            @Suppress("DEPRECATION")
+            audio = AudioTrack(
+                AudioManager.STREAM_MUSIC,
+                SAMPLING_RATE_IN_HZ,
+                CHANNEL_OUT_CONFIG,
+                AUDIO_FORMAT,
+                bufferSize,
+                AudioTrack.MODE_STREAM
+            )
+
+            var bytesread = 0
+            var ret: Int
+            val size = file.length().toInt()
+            audio.play()
+            while (bytesread < size) {
+                ret = inputStream.read(byteData, 0, count)
+                if (ret != -1 && audio.state == AudioTrack.STATE_INITIALIZED) {
+                    // Write the byte array to the track
+                    audio.write(byteData, 0, ret)
+                    bytesread += ret
+
+                } else
+                    break
+            }
             inputStream.close()
-        } catch (e: FileNotFoundException) {
-            Toast.makeText(this, "No file found...", Toast.LENGTH_SHORT).show()
+            audio.stop()
+            audio.release()
+
         }
+    }
 
-        val bufsize = AudioTrack.getMinBufferSize(SAMPLING_RATE_IN_HZ, CHANNEL_OUT_CONFIG, AUDIO_FORMAT)
-
-        val audio = AudioTrack(
-            AudioManager.STREAM_MUSIC,
-            SAMPLING_RATE_IN_HZ,
-            CHANNEL_OUT_CONFIG,
-            AUDIO_FORMAT,
-            bufsize,
-            AudioTrack.MODE_STREAM
-        )
-
-        audio.play()
-        audio.write(byteData, 0, byteData.size)
+    private fun stopFile() {
+        toast("Stopping...")
         audio.stop()
         audio.release()
     }
+
 
     private inner class RecordingRunnable : Runnable {
 
