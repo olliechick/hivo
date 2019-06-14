@@ -5,19 +5,19 @@
     android:layout_height="match_parent">
 
     <Button
-            android:text="Start recording"
+            android:text="@string/start_recording"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/btnStart"/>
 
     <Button
-            android:text="Stop recording"
+            android:text="@string/stop_recording"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/btnStop"/>
 
     <Button
-            android:text="Play the file"
+            android:text="@string/play_file"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/btnPlayPause"/>

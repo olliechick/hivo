@@ -72,7 +72,7 @@ class MainActivity : AppCompatActivity() {
                 stopFile()
             } else {
                 playFile()
-                btnPlayPause.text = "Stop file"
+                btnPlayPause.text = getString(R.string.pause_file)
                 playbackInProgress = true
             }
 
@@ -217,7 +217,7 @@ class MainActivity : AppCompatActivity() {
         audio.stop()
         audio.release()
 
-        btnPlayPause.text = "Play file"
+        btnPlayPause.text = getString(R.string.play_file)
         playbackInProgress = false
     }
 

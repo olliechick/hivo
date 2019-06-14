@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">HiVo</string>
+    <string name="no_file_found">No file found...</string>
+    <string name="play_file">Play file</string>
+    <string name="pause_file">Pause file</string>
+    <string name="stop_recording">Stop recording</string>
+    <string name="start_recording">Start recording</string>
 </resources>
