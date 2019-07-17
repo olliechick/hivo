@@ -46,6 +46,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var audio: AudioTrack
     private var inputStream: FileInputStream? = null
+    private var isPaused = false
+    private var bytesread = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,7 +71,9 @@ class MainActivity : AppCompatActivity() {
 
         btnPlayPause.setOnClickListener {
             if (playbackInProgress) {
-                stopFile()
+                pause()
+            } else if (isPaused) {
+                resume()
             } else {
                 playFile()
                 btnPlayPause.text = getString(R.string.pause_file)
@@ -168,57 +172,80 @@ class MainActivity : AppCompatActivity() {
             val file = File(Environment.getExternalStorageDirectory(), "recording.pcm")
             val count = 512 * 1024 // 512 kb
             val byteData = ByteArray(count)
-            try {
-                inputStream = FileInputStream(file)
-            } catch (e: FileNotFoundException) {
-                uiThread {
-                    toast("No file found...")
+
+            if (inputStream == null) {
+                try {
+                    inputStream = FileInputStream(file)
+                } catch (e: FileNotFoundException) {
+                    uiThread {
+                        toast(getString(R.string.no_file_found))
+                    }
+                    return@doAsync
                 }
-                return@doAsync
-            }
 
-            val bufferSize = AudioTrack.getMinBufferSize(SAMPLING_RATE_IN_HZ, CHANNEL_OUT_CONFIG, AUDIO_FORMAT)
+                val bufferSize = AudioTrack.getMinBufferSize(SAMPLING_RATE_IN_HZ, CHANNEL_OUT_CONFIG, AUDIO_FORMAT)
 
-            @Suppress("DEPRECATION")
-            audio = AudioTrack(
-                AudioManager.STREAM_MUSIC,
-                SAMPLING_RATE_IN_HZ,
-                CHANNEL_OUT_CONFIG,
-                AUDIO_FORMAT,
-                bufferSize,
-                AudioTrack.MODE_STREAM
-            )
+                @Suppress("DEPRECATION")
+                audio = AudioTrack(
+                    AudioManager.STREAM_MUSIC,
+                    SAMPLING_RATE_IN_HZ,
+                    CHANNEL_OUT_CONFIG,
+                    AUDIO_FORMAT,
+                    bufferSize,
+                    AudioTrack.MODE_STREAM
+                )
+                bytesread = 0
+            } else isPaused = false
 
-            var bytesread = 0
-            var ret: Int?
             val size = file.length().toInt()
             audio.play()
             while (bytesread < size) {
-                if (inputStream != null && audio.state == AudioTrack.STATE_INITIALIZED) {
-                    ret = inputStream?.read(byteData, 0, count)
-                    if (ret != null && ret != -1) {
-                        // Write the byte array to the track
-                        audio.write(byteData, 0, ret)
-                        bytesread += ret
-
+                if (isPaused) {
+                    audio.pause()
+                } else {
+                    audio.play()
+                    if (inputStream != null && audio.state == AudioTrack.STATE_INITIALIZED) {
+                        val ret = inputStream?.read(byteData, 0, count)
+                        if (ret != null && ret != -1) {
+                            // Write the byte array to the track
+                            audio.write(byteData, 0, ret)
+                            bytesread += ret
+                        } else break
                     } else break
-                } else break
+                }
             }
+
             uiThread {
                 stopFile()
             }
         }
     }
 
+    private fun resume() {
+        toast("Resuming.")
+        isPaused = false
+        playbackInProgress = true
+
+        btnPlayPause.text = getString(R.string.pause_file)
+    }
+
+    private fun pause() {
+        toast("Paused.")
+        isPaused = true
+        playbackInProgress = false
+
+        btnPlayPause.text = getString(R.string.play_file)
+    }
+
     private fun stopFile() {
-        toast("Stopping...")
+        toast("Stopped.")
         inputStream?.close()
         inputStream = null
         audio.stop()
         audio.release()
+        playbackInProgress = false
 
         btnPlayPause.text = getString(R.string.play_file)
-        playbackInProgress = false
     }
 
 
