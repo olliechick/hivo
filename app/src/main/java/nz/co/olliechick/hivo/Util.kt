@@ -1,5 +1,7 @@
 package nz.co.olliechick.hivo
 
+import android.content.Context
+import android.os.Environment
 import java.io.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -102,5 +104,14 @@ class Util {
                 output.write(value[i].toInt())
             }
         }
+
+        fun getPublicDirectory(): File? {
+            val file = File(Environment.getExternalStorageDirectory(), "HiVo recordings")
+            file.mkdirs()
+            return file
+        }
+
+        private fun getPrivateDirectory(context: Context): File = context.filesDir
+        fun getRawFile(context: Context) = File(getPrivateDirectory(context), "recording.pcm")
     }
 }

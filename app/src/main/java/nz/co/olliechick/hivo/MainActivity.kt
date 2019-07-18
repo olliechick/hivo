@@ -11,7 +11,6 @@ import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.view.Menu
 import android.view.MenuItem
 import androidx.core.app.ActivityCompat
@@ -20,6 +19,8 @@ import android.view.View
 import android.widget.Button
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
+import nz.co.olliechick.hivo.Util.Companion.getPublicDirectory
+import nz.co.olliechick.hivo.Util.Companion.getRawFile
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
@@ -91,7 +92,7 @@ class MainActivity : AppCompatActivity() {
                 toast("Saving...")
                 val timeRecordingStarted = LocalDateTime.now() //todo store recording start time when it happens
                 val filename = timeRecordingStarted.format(DateTimeFormatter.ofPattern("HH.mm.ss, dd MM yyyy")) + ".wav"
-                val rawFile = getRawFile()
+                val rawFile = getRawFile(this)
                 val waveFile = File(getPublicDirectory(), filename)
                 Util.rawToWave(rawFile, waveFile, SAMPLING_RATE_IN_HZ)
                 toast("Saved.")
@@ -99,6 +100,19 @@ class MainActivity : AppCompatActivity() {
                 toast("Error: API level too low")
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        startButton!!.isEnabled = true
+        stopButton!!.isEnabled = false
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        stopRecording()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -124,30 +138,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         else -> super.onOptionsItemSelected(item)
-    }
-
-
-    private fun getPublicDirectory(): File? {
-        val file = File(Environment.getExternalStorageDirectory(), "HiVo recordings")
-        file.mkdirs()
-        return file
-    }
-
-    private fun getPrivateDirectory() = filesDir
-    private fun getRawFile() = File(getPrivateDirectory(), "recording.pcm")
-
-
-    override fun onResume() {
-        super.onResume()
-
-        startButton!!.isEnabled = true
-        stopButton!!.isEnabled = false
-    }
-
-    override fun onPause() {
-        super.onPause()
-
-        stopRecording()
     }
 
     private fun startRecording() {
@@ -209,13 +199,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         recordingInProgress.set(false)
-
         recorder!!.stop()
-
         recorder!!.release()
-
         recorder = null
-
         recordingThread = null
     }
 
@@ -226,7 +212,7 @@ class MainActivity : AppCompatActivity() {
         doAsync {
 
             // read file
-            val file = getRawFile()
+            val file = getRawFile(this@MainActivity)
             val count = 512 * 1024 // 512 kb
             val byteData = ByteArray(count)
 
@@ -309,7 +295,7 @@ class MainActivity : AppCompatActivity() {
     private inner class RecordingRunnable : Runnable {
 
         override fun run() {
-            val file = getRawFile()
+            val file = getRawFile(this@MainActivity)
             val buffer = ByteBuffer.allocateDirect(BUFFER_SIZE)
 
             try {
@@ -318,9 +304,7 @@ class MainActivity : AppCompatActivity() {
                         val result = recorder!!.read(buffer, BUFFER_SIZE)
                         if (result < 0) {
                             throw RuntimeException(
-                                "Reading of audio buffer failed: " + getBufferReadFailureReason(
-                                    result
-                                )
+                                "Reading of audio buffer failed: " + getBufferReadFailureReason(result)
                             )
                         }
                         outStream.write(buffer.array(), 0, BUFFER_SIZE)
@@ -330,27 +314,24 @@ class MainActivity : AppCompatActivity() {
             } catch (e: IOException) {
                 throw RuntimeException("Writing of recorded audio failed", e)
             }
-
         }
 
         private fun getBufferReadFailureReason(errorCode: Int): String {
-            when (errorCode) {
-                AudioRecord.ERROR_INVALID_OPERATION -> return "ERROR_INVALID_OPERATION"
-                AudioRecord.ERROR_BAD_VALUE -> return "ERROR_BAD_VALUE"
-                AudioRecord.ERROR_DEAD_OBJECT -> return "ERROR_DEAD_OBJECT"
-                AudioRecord.ERROR -> return "ERROR"
-                else -> return "Unknown ($errorCode)"
+            return when (errorCode) {
+                AudioRecord.ERROR_INVALID_OPERATION -> "ERROR_INVALID_OPERATION"
+                AudioRecord.ERROR_BAD_VALUE -> "ERROR_BAD_VALUE"
+                AudioRecord.ERROR_DEAD_OBJECT -> "ERROR_DEAD_OBJECT"
+                AudioRecord.ERROR -> "ERROR"
+                else -> "Unknown ($errorCode)"
             }
         }
     }
 
     companion object {
 
-        private val SAMPLING_RATE_IN_HZ = 44100
-
-        private val CHANNEL_IN_CONFIG = AudioFormat.CHANNEL_IN_STEREO
-        private val CHANNEL_OUT_CONFIG = AudioFormat.CHANNEL_OUT_STEREO
-
+        private const val SAMPLING_RATE_IN_HZ = 44100
+        private const val CHANNEL_IN_CONFIG = AudioFormat.CHANNEL_IN_STEREO
+        private const val CHANNEL_OUT_CONFIG = AudioFormat.CHANNEL_OUT_STEREO
         private val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
 
         /**
@@ -359,7 +340,7 @@ class MainActivity : AppCompatActivity() {
          * size is determined by [AudioRecord.getMinBufferSize] and depends on the
          * recording settings.
          */
-        private val BUFFER_SIZE_FACTOR = 2
+        private const val BUFFER_SIZE_FACTOR = 2
 
         /**
          * Size of the buffer where the audio data is stored by Android
