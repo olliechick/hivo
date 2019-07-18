@@ -1,16 +1,19 @@
 package nz.co.olliechick.hivo
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.AudioTrack
 import android.media.MediaRecorder
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.view.Menu
+import android.view.MenuItem
 import androidx.core.app.ActivityCompat
 import androidx.appcompat.app.AppCompatActivity
 import android.view.View
@@ -27,9 +30,6 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicBoolean
 
 
-/**
- * Sample that demonstrates how to record a device's microphone using [AudioRecord].
- */
 class MainActivity : AppCompatActivity() {
 
     /**
@@ -107,6 +107,25 @@ class MainActivity : AppCompatActivity() {
         inflater.inflate(R.menu.mainmenu, menu)
         return true
     }
+
+
+    override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
+        R.id.settings -> {
+            val intent = Intent(this, SettingsActivity::class.java)
+            startActivity(intent)
+            true
+        }
+
+        R.id.help -> {
+            val uri = Uri.parse(Util.helpUrl)
+            val intent = Intent(Intent.ACTION_VIEW, uri)
+            startActivity(intent)
+            true
+        }
+
+        else -> super.onOptionsItemSelected(item)
+    }
+
 
     private fun getPublicDirectory(): File? {
         val file = File(Environment.getExternalStorageDirectory(), "HiVo recordings")

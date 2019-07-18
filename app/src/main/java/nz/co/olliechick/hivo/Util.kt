@@ -8,6 +8,8 @@ import java.nio.ByteOrder
 class Util {
     companion object {
 
+        const val helpUrl =
+            "https://docs.google.com/document/d/1Ayy6e52J_IaNXumw5bOuv1kslXrlIouXY6a_Ba71CyY/edit?usp=sharing"
 
         // adapted from https://stackoverflow.com/a/37436599/8355496
         @Throws(IOException::class)
