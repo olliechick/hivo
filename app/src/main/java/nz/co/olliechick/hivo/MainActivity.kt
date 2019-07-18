@@ -21,6 +21,8 @@ import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
 import java.io.*
 import java.nio.ByteBuffer
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicBoolean
 
 
@@ -70,17 +72,40 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnPlayPause.setOnClickListener {
-            if (playbackInProgress) {
-                pause()
-            } else if (isPaused) {
-                resume()
-            } else {
-                playFile()
-                btnPlayPause.text = getString(R.string.pause_file)
-                playbackInProgress = true
+            when {
+                playbackInProgress -> pause()
+                isPaused -> resume()
+                else -> {
+                    playFile()
+                    btnPlayPause.text = getString(R.string.pause_file)
+                    playbackInProgress = true
+                }
             }
-
         }
+
+        btnSave.setOnClickListener {
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                //todo re-engineer so it works back to api 16
+                toast("Saving...")
+                val timeRecordingStarted = LocalDateTime.now() //todo store recording start time when it happens
+                val filename = timeRecordingStarted.format(DateTimeFormatter.ofPattern("HH.mm.ss, dd MM yyyy")) + ".wav"
+                val rawFile = File(Environment.getExternalStorageDirectory(), "recording.pcm")
+                val waveFile = File(getDirectory(), filename)
+                Util.rawToWave(rawFile, waveFile, SAMPLING_RATE_IN_HZ)
+                toast("Saved.")
+            } else {
+                toast("Error: API level too low")
+            }
+        }
+    }
+
+    private fun getDirectory(): File? {
+        // Get the directory for the user's public pictures directory.
+        val file =
+            File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PODCASTS), "HiVo recordings")
+        file.mkdirs()
+        return file
     }
 
 
@@ -112,7 +137,11 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 402) {
             if (PackageManager.PERMISSION_DENIED in grantResults) {
