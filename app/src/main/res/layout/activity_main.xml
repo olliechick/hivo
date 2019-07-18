@@ -8,23 +8,23 @@
             android:text="@string/start_recording"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/btnStart"/>
+            android:id="@+id/startRecordingButton"/>
 
     <Button
             android:text="@string/stop_recording"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/btnStop"/>
+            android:id="@+id/stopRecordingButton"/>
 
     <Button
             android:text="@string/play_file"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/btnPlayPause"/>
+            android:id="@+id/playPauseButton"/>
 
     <Button
             android:text="@string/save"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/btnSave"/>
+            android:id="@+id/saveButton"/>
 </LinearLayout>

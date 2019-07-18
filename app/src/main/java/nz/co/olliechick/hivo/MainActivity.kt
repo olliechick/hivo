@@ -59,34 +59,31 @@ class MainActivity : AppCompatActivity() {
 
         checkPermissions(arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE))
 
-        startButton = findViewById<View>(R.id.btnStart) as Button
-        startButton!!.setOnClickListener {
+        startRecordingButton!!.setOnClickListener {
             startRecording()
             startButton!!.isEnabled = false
             stopButton!!.isEnabled = true
         }
 
-        stopButton = findViewById<View>(R.id.btnStop) as Button
-        stopButton!!.setOnClickListener {
+        stopRecordingButton.setOnClickListener {
             stopRecording()
             startButton!!.isEnabled = true
             stopButton!!.isEnabled = false
         }
 
-        btnPlayPause.setOnClickListener {
+        playPauseButton.setOnClickListener {
             when {
                 playbackInProgress -> pause()
                 isPaused -> resume()
                 else -> {
                     playFile()
-                    btnPlayPause.text = getString(R.string.pause_file)
+                    playPauseButton.text = getString(R.string.pause_file)
                     playbackInProgress = true
                 }
             }
         }
 
-        btnSave.setOnClickListener {
-
+        saveButton.setOnClickListener {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 //todo re-engineer so it works back to api 16
                 toast("Saving...")
@@ -269,7 +266,7 @@ class MainActivity : AppCompatActivity() {
         isPaused = false
         playbackInProgress = true
 
-        btnPlayPause.text = getString(R.string.pause_file)
+        playPauseButton.text = getString(R.string.pause_file)
     }
 
     private fun pause() {
@@ -277,7 +274,7 @@ class MainActivity : AppCompatActivity() {
         isPaused = true
         playbackInProgress = false
 
-        btnPlayPause.text = getString(R.string.play_file)
+        playPauseButton.text = getString(R.string.play_file)
     }
 
     private fun stopFile() {
@@ -288,7 +285,7 @@ class MainActivity : AppCompatActivity() {
         audio.release()
         playbackInProgress = false
 
-        btnPlayPause.text = getString(R.string.play_file)
+        playPauseButton.text = getString(R.string.play_file)
     }
 
 
