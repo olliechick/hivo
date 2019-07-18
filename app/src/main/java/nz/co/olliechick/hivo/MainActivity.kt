@@ -90,8 +90,8 @@ class MainActivity : AppCompatActivity() {
                 toast("Saving...")
                 val timeRecordingStarted = LocalDateTime.now() //todo store recording start time when it happens
                 val filename = timeRecordingStarted.format(DateTimeFormatter.ofPattern("HH.mm.ss, dd MM yyyy")) + ".wav"
-                val rawFile = File(Environment.getExternalStorageDirectory(), "recording.pcm")
-                val waveFile = File(getDirectory(), filename)
+                val rawFile = getRawFile()
+                val waveFile = File(getPublicDirectory(), filename)
                 Util.rawToWave(rawFile, waveFile, SAMPLING_RATE_IN_HZ)
                 toast("Saved.")
             } else {
@@ -100,12 +100,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getDirectory(): File? {
-        val file =
-            File(Environment.getExternalStorageDirectory(), "HiVo recordings")
+    private fun getPublicDirectory(): File? {
+        val file = File(Environment.getExternalStorageDirectory(), "HiVo recordings")
         file.mkdirs()
         return file
     }
+
+    private fun getPrivateDirectory() = filesDir
+    private fun getRawFile() = File(getPrivateDirectory(), "recording.pcm")
 
 
     override fun onResume() {
@@ -197,7 +199,7 @@ class MainActivity : AppCompatActivity() {
         doAsync {
 
             // read file
-            val file = File(Environment.getExternalStorageDirectory(), "recording.pcm")
+            val file = getRawFile()
             val count = 512 * 1024 // 512 kb
             val byteData = ByteArray(count)
 
@@ -280,7 +282,7 @@ class MainActivity : AppCompatActivity() {
     private inner class RecordingRunnable : Runnable {
 
         override fun run() {
-            val file = File(Environment.getExternalStorageDirectory(), "recording.pcm")
+            val file = getRawFile()
             val buffer = ByteBuffer.allocateDirect(BUFFER_SIZE)
 
             try {
