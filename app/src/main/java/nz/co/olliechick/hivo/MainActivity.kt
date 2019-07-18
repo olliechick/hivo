@@ -78,18 +78,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         saveButton.setOnClickListener {
+            toast("Saving...")
+            var filename = "recording.wav"
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                //todo re-engineer so it works back to api 16
-                toast("Saving...")
                 val timeRecordingStarted = LocalDateTime.now() //todo store recording start time when it happens
-                val filename = timeRecordingStarted.format(DateTimeFormatter.ofPattern("HH.mm.ss, dd MM yyyy")) + ".wav"
-                val rawFile = getRawFile(this)
-                val waveFile = File(getPublicDirectory(), filename)
-                Util.rawToWave(rawFile, waveFile, SAMPLING_RATE_IN_HZ)
-                toast("Saved.")
-            } else {
-                toast("Error: API level too low")
+                filename = timeRecordingStarted.format(DateTimeFormatter.ofPattern("HH.mm.ss, dd MM yyyy")) + ".wav"
             }
+            val rawFile = getRawFile(this)
+            val waveFile = File(getPublicDirectory(), filename)
+            Util.rawToWave(rawFile, waveFile, SAMPLING_RATE_IN_HZ)
+            toast("Saved.")
         }
     }
 
