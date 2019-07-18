@@ -15,8 +15,6 @@ import android.view.Menu
 import android.view.MenuItem
 import androidx.core.app.ActivityCompat
 import androidx.appcompat.app.AppCompatActivity
-import android.view.View
-import android.widget.Button
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
 import nz.co.olliechick.hivo.Util.Companion.getPublicDirectory
@@ -44,10 +42,6 @@ class MainActivity : AppCompatActivity() {
 
     private var recordingThread: Thread? = null
 
-    private var startButton: Button? = null
-
-    private var stopButton: Button? = null
-
     private lateinit var audio: AudioTrack
     private var inputStream: FileInputStream? = null
     private var isPaused = false
@@ -61,14 +55,14 @@ class MainActivity : AppCompatActivity() {
 
         startRecordingButton!!.setOnClickListener {
             startRecording()
-            startButton!!.isEnabled = false
-            stopButton!!.isEnabled = true
+            startRecordingButton!!.isEnabled = false
+            stopRecordingButton!!.isEnabled = true
         }
 
         stopRecordingButton.setOnClickListener {
             stopRecording()
-            startButton!!.isEnabled = true
-            stopButton!!.isEnabled = false
+            startRecordingButton!!.isEnabled = true
+            stopRecordingButton!!.isEnabled = false
         }
 
         playPauseButton.setOnClickListener {
@@ -102,8 +96,8 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        startButton!!.isEnabled = true
-        stopButton!!.isEnabled = false
+        startRecordingButton!!.isEnabled = true
+        stopRecordingButton!!.isEnabled = false
     }
 
     override fun onPause() {
@@ -121,15 +115,25 @@ class MainActivity : AppCompatActivity() {
 
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-        R.id.settings -> {
-            val intent = Intent(this, SettingsActivity::class.java)
-            startActivity(intent)
+        R.id.scheduled_recordings -> {
+            toast("Not yet implemented")
+            true
+        }
+
+        R.id.past_recordings -> {
+            toast("Not yet implemented")
             true
         }
 
         R.id.help -> {
             val uri = Uri.parse(Util.helpUrl)
             val intent = Intent(Intent.ACTION_VIEW, uri)
+            startActivity(intent)
+            true
+        }
+
+        R.id.settings -> {
+            val intent = Intent(this, SettingsActivity::class.java)
             startActivity(intent)
             true
         }
