@@ -10,8 +10,9 @@ import android.media.MediaRecorder
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.support.v4.app.ActivityCompat
-import android.support.v7.app.AppCompatActivity
+import android.view.Menu
+import androidx.core.app.ActivityCompat
+import androidx.appcompat.app.AppCompatActivity
 import android.view.View
 import android.widget.Button
 import android.widget.Toast
@@ -98,6 +99,13 @@ class MainActivity : AppCompatActivity() {
                 toast("Error: API level too low")
             }
         }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        super.onCreateOptionsMenu(menu)
+        val inflater = menuInflater
+        inflater.inflate(R.menu.mainmenu, menu)
+        return true
     }
 
     private fun getPublicDirectory(): File? {

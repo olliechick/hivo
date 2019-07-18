@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:title="@string/scheduled_recordings"/>
+    <item android:title="@string/past_recordings"/>
+    <item android:title="@string/help"/>
+    <item android:title="@string/settings"/>
+</menu>
