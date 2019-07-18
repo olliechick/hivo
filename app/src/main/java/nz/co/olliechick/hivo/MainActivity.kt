@@ -101,9 +101,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getDirectory(): File? {
-        // Get the directory for the user's public pictures directory.
         val file =
-            File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PODCASTS), "HiVo recordings")
+            File(Environment.getExternalStorageDirectory(), "HiVo recordings")
         file.mkdirs()
         return file
     }
