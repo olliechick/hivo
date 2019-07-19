@@ -37,6 +37,7 @@
         app:title="@string/support">
 
         <Preference
+            app:icon="@drawable/baseline_email_24"
             app:key="feedback"
             app:summary="@string/report_issues"
             app:title="@string/send_feedback" />
