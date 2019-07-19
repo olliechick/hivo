@@ -17,6 +17,7 @@ import androidx.core.app.ActivityCompat
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
+import nz.co.olliechick.hivo.Util.Companion.getDateString
 import nz.co.olliechick.hivo.Util.Companion.getPublicDirectory
 import nz.co.olliechick.hivo.Util.Companion.getRawFile
 import org.jetbrains.anko.doAsync
@@ -79,11 +80,7 @@ class MainActivity : AppCompatActivity() {
 
         saveButton.setOnClickListener {
             toast("Saving...")
-            var filename = "recording.wav"
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val timeRecordingStarted = LocalDateTime.now() //todo store recording start time when it happens
-                filename = timeRecordingStarted.format(DateTimeFormatter.ofPattern("HH.mm.ss, dd MM yyyy")) + ".wav"
-            }
+            val filename = getDateString(FilenameFormat.READABLE) + ".wav"
             val rawFile = getRawFile(this)
             val waveFile = File(getPublicDirectory(), filename)
             Util.rawToWave(rawFile, waveFile, SAMPLING_RATE_IN_HZ)

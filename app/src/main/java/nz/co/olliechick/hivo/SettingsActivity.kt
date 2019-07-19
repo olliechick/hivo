@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 
@@ -33,6 +34,22 @@ class SettingsActivity : AppCompatActivity() {
                 startActivity(intent)
                 true
             }
+
+            val filenamePreference = findPreference<ListPreference>("filename")
+            filenamePreference?.entries = arrayOf(
+                Util.getDateString(FilenameFormat.SORTABLE),
+                Util.getDateString(FilenameFormat.READABLE),
+                "Specify on save"
+            )
+
+            val defaultValue = FilenameFormat.READABLE.name
+            filenamePreference?.entryValues = arrayOf(
+                FilenameFormat.SORTABLE.name,
+                defaultValue,
+                FilenameFormat.SPECIFY_ON_SAVE.name
+            )
+
+            filenamePreference?.setDefaultValue(defaultValue)
         }
     }
 }

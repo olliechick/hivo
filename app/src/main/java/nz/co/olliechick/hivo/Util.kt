@@ -5,6 +5,8 @@ import android.os.Environment
 import java.io.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.text.SimpleDateFormat
+import java.util.*
 
 
 class Util {
@@ -113,5 +115,14 @@ class Util {
 
         private fun getPrivateDirectory(context: Context): File = context.filesDir
         fun getRawFile(context: Context) = File(getPrivateDirectory(context), "recording.pcm")
+
+        fun getDateString(format: FilenameFormat): String {
+            val pattern = when (format) {
+                FilenameFormat.READABLE -> "h:mm:ss a, d MMM yyyy"
+                FilenameFormat.SORTABLE -> "yyyy-MM-dd-HH-mm-ss"
+                else -> "recording"
+            }
+            return SimpleDateFormat(pattern, Locale.ENGLISH).format(Date())
+        }
     }
 }

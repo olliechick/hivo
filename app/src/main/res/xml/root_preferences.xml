@@ -25,9 +25,6 @@
         app:useSimpleSummaryProvider="true" />
 
     <ListPreference
-        app:defaultValue="readable"
-        app:entries="@array/filename_entries"
-        app:entryValues="@array/filename_values"
         app:key="filename"
         app:title="@string/filename_format"
         app:useSimpleSummaryProvider="true" />
