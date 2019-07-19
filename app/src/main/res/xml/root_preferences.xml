@@ -16,6 +16,8 @@
 
 <androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <nz.co.olliechick.hivo.BufferPreference />
+
     <ListPreference
         app:defaultValue="specify_on_save"
         app:entries="@array/filename_entries"
