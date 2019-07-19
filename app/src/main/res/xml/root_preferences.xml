@@ -16,10 +16,16 @@
 
 <androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <nz.co.olliechick.hivo.BufferPreference />
+    <ListPreference
+        app:defaultValue="60"
+        app:entries="@array/buffer_entries"
+        app:entryValues="@array/buffer_values"
+        app:key="buffer"
+        app:title="@string/buffer"
+        app:useSimpleSummaryProvider="true" />
 
     <ListPreference
-        app:defaultValue="specify_on_save"
+        app:defaultValue="readable"
         app:entries="@array/filename_entries"
         app:entryValues="@array/filename_values"
         app:key="filename"

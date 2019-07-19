@@ -16,4 +16,5 @@
     <string name="send_feedback">Send feedback</string>
     <string name="report_issues">Report technical issues or suggest new features</string>
     <string name="dev_email">hivoapp@gmail.com</string>
+    <string name="buffer">Maximum time to record</string>
 </resources>
