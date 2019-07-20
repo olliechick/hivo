@@ -2,6 +2,7 @@ package nz.co.olliechick.hivo
 
 import android.content.Context
 import android.os.Environment
+import androidx.preference.PreferenceManager
 import java.io.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -14,6 +15,7 @@ class Util {
 
         const val helpUrl =
             "https://docs.google.com/document/d/1Ayy6e52J_IaNXumw5bOuv1kslXrlIouXY6a_Ba71CyY/edit?usp=sharing"
+        const val defaultFilename = "recording"
 
         // adapted from https://stackoverflow.com/a/37436599/8355496
         @Throws(IOException::class)
@@ -120,9 +122,18 @@ class Util {
             val pattern = when (format) {
                 FilenameFormat.READABLE -> "h:mm:ss a, d MMM yyyy"
                 FilenameFormat.SORTABLE -> "yyyy-MM-dd-HH-mm-ss"
-                else -> "recording"
+                else -> defaultFilename
             }
-            return SimpleDateFormat(pattern, Locale.ENGLISH).format(Date())
+            return if (pattern == defaultFilename) defaultFilename
+            else SimpleDateFormat(pattern, Locale.ENGLISH).format(Date())
+        }
+
+        fun getDateString(context: Context): String {
+            val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+            val name = sharedPreferences.getString("filename", null)
+
+            return if (name == null) defaultFilename
+            else getDateString(FilenameFormat.valueOf(name))
         }
     }
 }

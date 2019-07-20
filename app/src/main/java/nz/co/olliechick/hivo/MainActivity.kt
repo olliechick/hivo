@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity() {
 
         saveButton.setOnClickListener {
             toast("Saving...")
-            val filename = getDateString(FilenameFormat.READABLE) + ".wav"
+            val filename = getDateString(this) + ".wav"
             val rawFile = getRawFile(this)
             val waveFile = File(getPublicDirectory(), filename)
             Util.rawToWave(rawFile, waveFile, SAMPLING_RATE_IN_HZ)
