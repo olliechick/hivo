@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">HiVo</string>
+    <string name="app_name" translatable="false">HiVo</string>
     <string name="no_file_found">No file found…</string>
     <string name="play_file">Play file</string>
     <string name="pause_file">Pause file</string>
@@ -15,9 +15,10 @@
     <string name="support">Support</string>
     <string name="send_feedback">Send feedback</string>
     <string name="report_issues">Report technical issues or suggest new features</string>
-    <string name="dev_email">hivoapp@gmail.com</string>
+    <string name="dev_email" translatable="false">hivoapp@gmail.com</string>
     <string name="buffer">Maximum time to record</string>
     <string name="save_recording">Save recording</string>
     <string name="cancel">Cancel</string>
     <string name="enter_a_filename">Enter a filename…</string>
+    <string name="wav_ext" translatable="false">.wav</string>
 </resources>
