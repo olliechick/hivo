@@ -38,8 +38,8 @@ class SettingsActivity : AppCompatActivity() {
             val filenamePreference = findPreference<ListPreference>("filename")
             activity?.applicationContext?.let {
                 filenamePreference?.entries = arrayOf(
-                    Util.getDateString(it, FilenameFormat.SORTABLE),
                     Util.getDateString(it, FilenameFormat.READABLE),
+                    Util.getDateString(it, FilenameFormat.SORTABLE),
                     getString(R.string.specify_on_save)
                 )
             }
