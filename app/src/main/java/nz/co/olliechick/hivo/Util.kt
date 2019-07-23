@@ -1,6 +1,7 @@
 package nz.co.olliechick.hivo
 
 import android.content.Context
+import android.content.res.Resources
 import android.os.Environment
 import androidx.preference.PreferenceManager
 import java.io.*
@@ -12,10 +13,6 @@ import java.util.*
 
 class Util {
     companion object {
-
-        const val helpUrl =
-            "https://docs.google.com/document/d/1Ayy6e52J_IaNXumw5bOuv1kslXrlIouXY6a_Ba71CyY/edit?usp=sharing"
-        const val defaultFilename = "recording"
 
         // adapted from https://stackoverflow.com/a/37436599/8355496
         @Throws(IOException::class)
@@ -110,13 +107,17 @@ class Util {
         }
 
         fun getPublicDirectory(): File? {
-            val file = File(Environment.getExternalStorageDirectory(), "HiVo recordings")
+            val file = File(
+                Environment.getExternalStorageDirectory(),
+                Resources.getSystem().getString(R.string.hivo_recordings)
+            )
             file.mkdirs()
             return file
         }
 
         private fun getPrivateDirectory(context: Context): File = context.filesDir
-        fun getRawFile(context: Context) = File(getPrivateDirectory(context), "recording.pcm")
+        fun getRawFile(context: Context) =
+            File(getPrivateDirectory(context), Resources.getSystem().getString(R.string.raw_recording_filename))
 
         fun getDateString(format: FilenameFormat): String? {
             val pattern = when (format) {

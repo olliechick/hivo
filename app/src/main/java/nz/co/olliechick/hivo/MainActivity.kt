@@ -145,7 +145,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         R.id.help -> {
-            val uri = Uri.parse(Util.helpUrl)
+            val uri = Uri.parse(getString(R.string.help_url))
             val intent = Intent(Intent.ACTION_VIEW, uri)
             startActivity(intent)
             true
