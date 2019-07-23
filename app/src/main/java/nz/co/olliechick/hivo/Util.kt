@@ -1,7 +1,6 @@
 package nz.co.olliechick.hivo
 
 import android.content.Context
-import android.content.res.Resources
 import android.os.Environment
 import androidx.preference.PreferenceManager
 import java.io.*
@@ -106,27 +105,24 @@ class Util {
             }
         }
 
-        fun getPublicDirectory(): File? {
-            val file = File(
-                Environment.getExternalStorageDirectory(),
-                Resources.getSystem().getString(R.string.hivo_recordings)
-            )
+        fun getPublicDirectory(context: Context): File? {
+            val file = File(Environment.getExternalStorageDirectory(), context.getString(R.string.hivo_recordings))
             file.mkdirs()
             return file
         }
 
         private fun getPrivateDirectory(context: Context): File = context.filesDir
         fun getRawFile(context: Context) =
-            File(getPrivateDirectory(context), Resources.getSystem().getString(R.string.raw_recording_filename))
+            File(getPrivateDirectory(context), context.getString(R.string.raw_recording_filename))
 
-        fun getDateString(format: FilenameFormat): String? {
+        fun getDateString(context: Context, format: FilenameFormat): String? {
             val pattern = when (format) {
                 FilenameFormat.READABLE -> "h:mm:ss a, d MMM yyyy"
                 FilenameFormat.SORTABLE -> "yyyy-MM-dd-HH-mm-ss"
                 else -> null
             }
             return if (pattern == null) null
-            else SimpleDateFormat(pattern, Locale.ENGLISH).format(Date())
+            else SimpleDateFormat(pattern, Locale.ENGLISH).format(Date()) + context.getString(R.string.wav_ext)
         }
 
         fun getDateString(context: Context): String? {
@@ -134,7 +130,7 @@ class Util {
             val name = sharedPreferences.getString("filename", null)
 
             return if (name == null) null // shouldn't happen
-            else getDateString(FilenameFormat.valueOf(name))
+            else getDateString(context, FilenameFormat.valueOf(name))
         }
     }
 }

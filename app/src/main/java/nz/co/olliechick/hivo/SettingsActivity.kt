@@ -36,11 +36,13 @@ class SettingsActivity : AppCompatActivity() {
             }
 
             val filenamePreference = findPreference<ListPreference>("filename")
-            filenamePreference?.entries = arrayOf(
-                Util.getDateString(FilenameFormat.SORTABLE),
-                Util.getDateString(FilenameFormat.READABLE),
-                "Specify on save"
-            )
+            activity?.applicationContext?.let {
+                filenamePreference?.entries = arrayOf(
+                    Util.getDateString(it, FilenameFormat.SORTABLE),
+                    Util.getDateString(it, FilenameFormat.READABLE),
+                    getString(R.string.specify_on_save)
+                )
+            }
 
             val defaultValue = FilenameFormat.READABLE.name
             filenamePreference?.entryValues = arrayOf(

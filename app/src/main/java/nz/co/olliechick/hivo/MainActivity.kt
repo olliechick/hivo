@@ -89,7 +89,7 @@ class MainActivity : AppCompatActivity() {
     private fun saveWav(filename: String) {
         toast("Saving...")
         val rawFile = getRawFile(this)
-        val waveFile = File(getPublicDirectory(), "$filename.wav")
+        val waveFile = File(getPublicDirectory(this), filename)
         Util.rawToWave(rawFile, waveFile, SAMPLING_RATE_IN_HZ)
         toast("Saved.")
     }
