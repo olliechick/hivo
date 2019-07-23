@@ -17,4 +17,7 @@
     <string name="report_issues">Report technical issues or suggest new features</string>
     <string name="dev_email">hivoapp@gmail.com</string>
     <string name="buffer">Maximum time to record</string>
+    <string name="save_recording">Save recording</string>
+    <string name="cancel">Cancel</string>
+    <string name="enter_a_filename">Enter a filename…</string>
 </resources>

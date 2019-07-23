@@ -118,21 +118,21 @@ class Util {
         private fun getPrivateDirectory(context: Context): File = context.filesDir
         fun getRawFile(context: Context) = File(getPrivateDirectory(context), "recording.pcm")
 
-        fun getDateString(format: FilenameFormat): String {
+        fun getDateString(format: FilenameFormat): String? {
             val pattern = when (format) {
                 FilenameFormat.READABLE -> "h:mm:ss a, d MMM yyyy"
                 FilenameFormat.SORTABLE -> "yyyy-MM-dd-HH-mm-ss"
-                else -> defaultFilename
+                else -> null
             }
-            return if (pattern == defaultFilename) defaultFilename
+            return if (pattern == null) null
             else SimpleDateFormat(pattern, Locale.ENGLISH).format(Date())
         }
 
-        fun getDateString(context: Context): String {
+        fun getDateString(context: Context): String? {
             val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
             val name = sharedPreferences.getString("filename", null)
 
-            return if (name == null) defaultFilename
+            return if (name == null) null // shouldn't happen
             else getDateString(FilenameFormat.valueOf(name))
         }
     }

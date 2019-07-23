@@ -1,6 +1,7 @@
 package nz.co.olliechick.hivo
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioFormat
@@ -16,7 +17,9 @@ import android.view.MenuItem
 import androidx.core.app.ActivityCompat
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.save_filename_dialog.view.*
 import nz.co.olliechick.hivo.Util.Companion.getDateString
 import nz.co.olliechick.hivo.Util.Companion.getPublicDirectory
 import nz.co.olliechick.hivo.Util.Companion.getRawFile
@@ -25,8 +28,6 @@ import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
 import java.io.*
 import java.nio.ByteBuffer
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicBoolean
 
 
@@ -79,13 +80,36 @@ class MainActivity : AppCompatActivity() {
         }
 
         saveButton.setOnClickListener {
-            toast("Saving...")
-            val filename = getDateString(this) + ".wav"
-            val rawFile = getRawFile(this)
-            val waveFile = File(getPublicDirectory(), filename)
-            Util.rawToWave(rawFile, waveFile, SAMPLING_RATE_IN_HZ)
-            toast("Saved.")
+            val dateString = getDateString(this)
+            if (dateString == null) promptForFilenameAndSave()
+            else saveWav(dateString)
         }
+    }
+
+    private fun saveWav(filename: String) {
+        toast("Saving...")
+        val rawFile = getRawFile(this)
+        val waveFile = File(getPublicDirectory(), "$filename.wav")
+        Util.rawToWave(rawFile, waveFile, SAMPLING_RATE_IN_HZ)
+        toast("Saved.")
+    }
+
+    @SuppressLint("InflateParams")
+    private fun promptForFilenameAndSave() {
+
+        val builder = AlertDialog.Builder(this)
+        val view = layoutInflater.inflate(R.layout.save_filename_dialog, null)
+        builder.setView(view)
+        builder.setTitle(getString(R.string.save_recording))
+
+        // Set up the buttons
+        builder.setPositiveButton(getString(R.string.save)) { _, _ ->
+            run { saveWav(view.input?.text.toString().toLowerCase()) }
+        }
+        builder.setNegativeButton(getString(R.string.cancel)) { dialog, _ -> dialog.cancel() }
+
+        builder.create()
+        builder.show()
     }
 
     override fun onResume() {
