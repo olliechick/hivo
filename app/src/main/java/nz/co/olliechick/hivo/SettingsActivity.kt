@@ -44,14 +44,13 @@ class SettingsActivity : AppCompatActivity() {
                 )
             }
 
-            val defaultValue = FilenameFormat.READABLE.name
             filenamePreference?.entryValues = arrayOf(
+                FilenameFormat.READABLE.name,
                 FilenameFormat.SORTABLE.name,
-                defaultValue,
                 FilenameFormat.SPECIFY_ON_SAVE.name
             )
 
-            filenamePreference?.setDefaultValue(defaultValue)
+            filenamePreference?.setValueIndex(0)
         }
     }
 }
