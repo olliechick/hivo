@@ -16,6 +16,9 @@
         <activity
                 android:name=".SettingsActivity"
                 android:label="@string/title_activity_settings">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="nz.co.olliechick.hivo.MainActivity" />
         </activity>
         <activity android:name=".MainActivity">
             <intent-filter>
