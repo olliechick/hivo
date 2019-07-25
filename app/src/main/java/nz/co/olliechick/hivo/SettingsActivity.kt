@@ -53,7 +53,12 @@ class SettingsActivity : AppCompatActivity() {
                 .toArray(values)
             filenamePreference?.entryValues = values
 
-            filenamePreference?.setValueIndex(0)
+            if (filenamePreference != null && filenamePreference.value == null) {
+                val defaultValue = FilenameFormat.READABLE.name
+                PreferenceManager.getDefaultSharedPreferences(activity).getString(filenamePreference.key, defaultValue)
+                filenamePreference.value = defaultValue
+            }
+
         }
     }
 }
