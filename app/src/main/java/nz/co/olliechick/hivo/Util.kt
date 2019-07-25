@@ -1,6 +1,7 @@
 package nz.co.olliechick.hivo
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Environment
 import androidx.preference.PreferenceManager
 import java.io.*
@@ -12,6 +13,9 @@ import java.util.*
 
 class Util {
     companion object {
+        const val prefsFile = "me.olliechick.instagramunfollowers.prefs"
+        const val startTimeKey = "start_time"
+        const val filenameKey = "filename" //also defined in root_preferences.xml
 
         // adapted from https://stackoverflow.com/a/37436599/8355496
         @Throws(IOException::class)
@@ -115,22 +119,29 @@ class Util {
         fun getRawFile(context: Context) =
             File(getPrivateDirectory(context), context.getString(R.string.raw_recording_filename))
 
-        fun getDateString(context: Context, format: FilenameFormat): String? {
+        fun getDateString(context: Context, format: FilenameFormat, now: Date): String? {
             val pattern = when (format) {
                 FilenameFormat.READABLE -> "h:mm:ss a, d MMM yyyy"
                 FilenameFormat.SORTABLE -> "yyyy-MM-dd-HH-mm-ss"
                 else -> null
             }
             return if (pattern == null) null
-            else SimpleDateFormat(pattern, Locale.ENGLISH).format(Date()) + context.getString(R.string.wav_ext)
+            else SimpleDateFormat(pattern, Locale.ENGLISH).format(now) + context.getString(R.string.wav_ext)
         }
 
         fun getDateString(context: Context): String? {
             val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-            val name = sharedPreferences.getString("filename", null)
+            val name = sharedPreferences.getString(filenameKey, null)
+            val now = Date().apply { time = sharedPreferences.getLong(startTimeKey, 0) }//Date().time)}
 
             return if (name == null) null // shouldn't happen
-            else getDateString(context, FilenameFormat.valueOf(name))
+            else getDateString(context, FilenameFormat.valueOf(name), now)
+        }
+
+        fun saveStartTime(prefs: SharedPreferences) {
+            val prefsEditor = prefs.edit()
+            prefsEditor.putLong(startTimeKey, Date().time)
+            prefsEditor.apply()
         }
     }
 }

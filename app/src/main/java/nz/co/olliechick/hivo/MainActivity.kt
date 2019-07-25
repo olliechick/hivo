@@ -18,6 +18,7 @@ import androidx.core.app.ActivityCompat
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.save_filename_dialog.view.*
 import nz.co.olliechick.hivo.Util.Companion.getDateString
@@ -161,6 +162,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startRecording() {
+        Util.saveStartTime(getDefaultSharedPreferences(this))
         recorder = AudioRecord(
             MediaRecorder.AudioSource.DEFAULT, SAMPLING_RATE_IN_HZ,
             CHANNEL_IN_CONFIG, AUDIO_FORMAT, BUFFER_SIZE

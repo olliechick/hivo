@@ -3,10 +3,12 @@ package nz.co.olliechick.hivo
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.preference.PreferenceManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import java.util.*
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -37,12 +39,13 @@ class SettingsActivity : AppCompatActivity() {
 
             val filenamePreference = findPreference<ListPreference>("filename")
             val numberOfItems = FilenameFormat.values().size
+            val now = Date()
 
             val entries = arrayOfNulls<String>(numberOfItems)
             activity?.applicationContext?.let { context ->
                 arrayListOf<String>().apply {
                     FilenameFormat.values().forEach {
-                        this.add(Util.getDateString(context, it) ?: getString(R.string.specify_on_save))
+                        this.add(Util.getDateString(context, it, now) ?: getString(R.string.specify_on_save))
                     }
                 }.toArray(entries)
             }
