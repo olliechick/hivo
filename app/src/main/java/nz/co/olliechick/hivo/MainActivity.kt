@@ -104,7 +104,7 @@ class MainActivity : AppCompatActivity() {
 
         // Set up the buttons
         builder.setPositiveButton(getString(R.string.save)) { _, _ ->
-            run { saveWav(view.input?.text.toString().toLowerCase()) }
+            run { saveWav(view.input?.text.toString().toLowerCase() + getString(R.string.wav_ext)) }
         }
         builder.setNegativeButton(getString(R.string.cancel)) { dialog, _ -> dialog.cancel() }
 
