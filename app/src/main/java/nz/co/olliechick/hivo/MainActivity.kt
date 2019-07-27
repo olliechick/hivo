@@ -18,6 +18,7 @@ import androidx.core.app.ActivityCompat
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.save_filename_dialog.view.*
@@ -25,6 +26,7 @@ import nz.co.olliechick.hivo.Util.Companion.getDateString
 import nz.co.olliechick.hivo.Util.Companion.getPublicDirectory
 import nz.co.olliechick.hivo.Util.Companion.getRawFile
 import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.image
 import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
 import java.io.*
@@ -40,6 +42,13 @@ class MainActivity : AppCompatActivity() {
     private val recordingInProgress = AtomicBoolean(false)
 
     private var playbackInProgress = false
+        set(value) {
+            field = value
+            playPauseButton.image = ContextCompat.getDrawable(
+                this,
+                if (value) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
+            )
+        }
 
     private var recorder: AudioRecord? = null
 
@@ -56,16 +65,9 @@ class MainActivity : AppCompatActivity() {
 
         checkPermissions(arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE))
 
-        startRecordingButton!!.setOnClickListener {
-            startRecording()
-            startRecordingButton!!.isEnabled = false
-            stopRecordingButton!!.isEnabled = true
-        }
-
-        stopRecordingButton.setOnClickListener {
-            stopRecording()
-            startRecordingButton!!.isEnabled = true
-            stopRecordingButton!!.isEnabled = false
+        recordingSwitch.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) startRecording()
+            else stopRecording()
         }
 
         playPauseButton.setOnClickListener {
@@ -74,7 +76,6 @@ class MainActivity : AppCompatActivity() {
                 isPaused -> resume()
                 else -> {
                     playFile()
-                    playPauseButton.text = getString(R.string.pause_file)
                     playbackInProgress = true
                 }
             }
@@ -115,9 +116,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-
-        startRecordingButton!!.isEnabled = true
-        stopRecordingButton!!.isEnabled = false
+        recordingSwitch.isChecked = false
     }
 
     override fun onPause() {
@@ -162,6 +161,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startRecording() {
+        toast("Recording started.")
         Util.saveStartTime(getDefaultSharedPreferences(this))
         recorder = AudioRecord(
             MediaRecorder.AudioSource.DEFAULT, SAMPLING_RATE_IN_HZ,
@@ -216,6 +216,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun stopRecording() {
+        toast("Recording stopped.")
         if (null == recorder) {
             return
         }
@@ -290,16 +291,12 @@ class MainActivity : AppCompatActivity() {
         toast("Resuming.")
         isPaused = false
         playbackInProgress = true
-
-        playPauseButton.text = getString(R.string.pause_file)
     }
 
     private fun pause() {
         toast("Paused.")
         isPaused = true
         playbackInProgress = false
-
-        playPauseButton.text = getString(R.string.play_file)
     }
 
     private fun stopFile() {
@@ -309,8 +306,6 @@ class MainActivity : AppCompatActivity() {
         audio.stop()
         audio.release()
         playbackInProgress = false
-
-        playPauseButton.text = getString(R.string.play_file)
     }
 
 
