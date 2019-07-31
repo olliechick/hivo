@@ -12,6 +12,7 @@ import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
 import androidx.core.app.ActivityCompat
@@ -88,32 +89,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun saveWav(filename: String) {
-        toast("Saving...")
-        val rawFile = getRawFile(this)
-        val waveFile = File(getPublicDirectory(this), filename)
-        Util.rawToWave(rawFile, waveFile, SAMPLING_RATE_IN_HZ)
-        toast("Saved.")
-    }
-
-    @SuppressLint("InflateParams")
-    private fun promptForFilenameAndSave() {
-
-        val builder = AlertDialog.Builder(this)
-        val view = layoutInflater.inflate(R.layout.save_filename_dialog, null)
-        builder.setView(view)
-        builder.setTitle(getString(R.string.save_recording))
-
-        // Set up the buttons
-        builder.setPositiveButton(getString(R.string.save)) { _, _ ->
-            run { saveWav(view.input?.text.toString().toLowerCase() + getString(R.string.wav_ext)) }
-        }
-        builder.setNegativeButton(getString(R.string.cancel)) { dialog, _ -> dialog.cancel() }
-
-        builder.create()
-        builder.show()
-    }
-
     override fun onResume() {
         super.onResume()
         recordingSwitch.isChecked = false
@@ -131,7 +106,6 @@ class MainActivity : AppCompatActivity() {
         inflater.inflate(R.menu.mainmenu, menu)
         return true
     }
-
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         R.id.scheduled_recordings -> {
@@ -158,23 +132,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         else -> super.onOptionsItemSelected(item)
-    }
-
-    private fun startRecording() {
-        toast("Recording started.")
-        Util.saveStartTime(getDefaultSharedPreferences(this))
-        recorder = AudioRecord(
-            MediaRecorder.AudioSource.DEFAULT, SAMPLING_RATE_IN_HZ,
-            CHANNEL_IN_CONFIG, AUDIO_FORMAT, BUFFER_SIZE
-        )
-
-        recorder!!.startRecording()
-
-        recordingInProgress.set(true)
-
-        recordingThread = Thread(RecordingRunnable(), "Recording Thread")
-        recordingThread!!.start()
-
     }
 
     override fun onRequestPermissionsResult(
@@ -215,12 +172,28 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun startRecording() {
+        toast("Recording started.")
+        Util.saveStartTime(getDefaultSharedPreferences(this))
+        recorder = AudioRecord(
+            MediaRecorder.AudioSource.DEFAULT, SAMPLING_RATE_IN_HZ,
+            CHANNEL_IN_CONFIG, AUDIO_FORMAT, BUFFER_SIZE
+        )
+
+        recorder!!.startRecording()
+
+        recordingInProgress.set(true)
+
+        recordingThread = Thread(RecordingRunnable(), "Recording Thread")
+        recordingThread!!.start()
+    }
+
     private fun stopRecording() {
-        toast("Recording stopped.")
         if (null == recorder) {
             return
         }
 
+        toast("Recording stopped.")
         recordingInProgress.set(false)
         recorder!!.stop()
         recorder!!.release()
@@ -288,19 +261,29 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun resume() {
-        toast("Resuming.")
+        Toast.makeText(this, "Resuming.", Toast.LENGTH_SHORT).run {
+            setGravity(Gravity.CENTER, 0, 0)
+            show()
+        }
         isPaused = false
         playbackInProgress = true
     }
 
+
     private fun pause() {
-        toast("Paused.")
+        Toast.makeText(this, "Paused.", Toast.LENGTH_SHORT).run {
+            setGravity(Gravity.CENTER, 0, 0)
+            show()
+        }
         isPaused = true
         playbackInProgress = false
     }
 
     private fun stopFile() {
-        toast("Stopped.")
+        Toast.makeText(this, "Stopped.", Toast.LENGTH_SHORT).run {
+            setGravity(Gravity.CENTER, 0, 0)
+            show()
+        }
         inputStream?.close()
         inputStream = null
         audio.stop()
@@ -308,6 +291,31 @@ class MainActivity : AppCompatActivity() {
         playbackInProgress = false
     }
 
+    private fun saveWav(filename: String) {
+        toast("Saving...")
+        val rawFile = getRawFile(this)
+        val waveFile = File(getPublicDirectory(this), filename)
+        Util.rawToWave(rawFile, waveFile, SAMPLING_RATE_IN_HZ)
+        toast("Saved.")
+    }
+
+    @SuppressLint("InflateParams")
+    private fun promptForFilenameAndSave() {
+
+        val builder = AlertDialog.Builder(this)
+        val view = layoutInflater.inflate(R.layout.save_filename_dialog, null)
+        builder.setView(view)
+        builder.setTitle(getString(R.string.save_recording))
+
+        // Set up the buttons
+        builder.setPositiveButton(getString(R.string.save)) { _, _ ->
+            run { saveWav(view.input?.text.toString().toLowerCase() + getString(R.string.wav_ext)) }
+        }
+        builder.setNegativeButton(getString(R.string.cancel)) { dialog, _ -> dialog.cancel() }
+
+        builder.create()
+        builder.show()
+    }
 
     private inner class RecordingRunnable : Runnable {
 
