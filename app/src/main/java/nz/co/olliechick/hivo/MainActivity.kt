@@ -332,11 +332,11 @@ class MainActivity : AppCompatActivity() {
     // Saving audio
 
     private fun saveWav(filename: String) {
-        debugToast(this, "Saving...")
+        toast(getString(R.string.saving))
         val rawFile = getRawFile(this)
         val waveFile = File(getPublicDirectory(this), filename)
         Util.rawToWave(rawFile, waveFile, SAMPLING_RATE_IN_HZ)
-        debugToast(this, "Saved.")
+        toast(getString(R.string.saved))
     }
 
     @SuppressLint("InflateParams")

@@ -27,4 +27,6 @@
     <string name="error_1">Error 1: Can\'t retrieve filename options.</string>
     <string name="specify_on_save">Specify on save</string>
     <string name="play_pause_button">play/pause button</string>
+    <string name="saving">Saving...</string>
+    <string name="saved">Saved.</string>
 </resources>
