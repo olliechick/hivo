@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioRecord
@@ -70,8 +71,13 @@ class MainActivity : AppCompatActivity() {
         checkPermissions(arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE))
 
         recordingSwitch.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) startRecording()
-            else stopRecording()
+            if (isChecked) {
+                enableScreen()
+                startRecording()
+            } else {
+                disableScreen()
+                stopRecording()
+            }
         }
 
         playPauseButton.setOnClickListener {
@@ -288,7 +294,7 @@ class MainActivity : AppCompatActivity() {
             audio.play()
             while (bytesread < size) {
                 seekBar.progress = (bytesread * 100) / size
-                Log.i("FOO", "$bytesread / $size = ${seekBar.progress}")
+                // Log.i("FOO", "$bytesread / $size = ${seekBar.progress}")
                 if (isPaused) {
                     audio.pause()
                 } else {
@@ -367,6 +373,30 @@ class MainActivity : AppCompatActivity() {
         builder.create()
         builder.show()
     }
+
+    // UI
+
+    private fun changeScreenClickability(clickable: Boolean) {
+        arrayOf(playPauseButton, saveButton, seekBar).forEach {
+            it.run {
+                isClickable = clickable
+                isEnabled = clickable
+            }
+        }
+
+        if (clickable) {
+            linearLayout.setBackgroundColor(Color.rgb(255, 255, 255))
+            playPauseButton.colorFilter = null
+        }
+        else {
+            linearLayout.setBackgroundColor(Color.GRAY)
+            playPauseButton.setColorFilter(Color.DKGRAY)
+        }
+    }
+
+    private fun enableScreen() = changeScreenClickability(true)
+    private fun disableScreen() = changeScreenClickability(false)
+
 
     companion object {
 
