@@ -98,6 +98,8 @@ class MainActivity : AppCompatActivity() {
         }
 
 //        seekBar.setOnSeekBarChangeListener {}
+
+        disableScreen()
     }
 
     override fun onResume() {
@@ -327,14 +329,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun stopFile() {
-        debugToast(this, "Stopped.")
         inputStream?.close()
         inputStream = null
+        if (audio != null && playbackInProgress) debugToast(this, "Stopped.")
         audio?.takeIf { playbackInProgress }?.run {
             stop()
             release()
         }
         playbackInProgress = false
+        seekBar.progress = 0
     }
 
     // Saving audio
