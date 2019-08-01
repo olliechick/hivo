@@ -76,16 +76,16 @@ class MainActivity : AppCompatActivity() {
             } else {
                 stopRecording()
                 disableScreen()
-                stopFile()
+                stopPlayback()
             }
         }
 
         playPauseButton.setOnClickListener {
             when {
-                playbackInProgress -> pause()
-                isPaused -> resume()
+                playbackInProgress -> pausePlayback()
+                isPaused -> resumePlayback()
                 else -> {
-                    playFile()
+                    startPlayback()
                     playbackInProgress = true
                 }
             }
@@ -100,17 +100,6 @@ class MainActivity : AppCompatActivity() {
 //        seekBar.setOnSeekBarChangeListener {}
 
         disableScreen()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        recordingSwitch.isChecked = false
-    }
-
-    override fun onPause() {
-        super.onPause()
-
-        stopRecording()
     }
 
     // Options menu
@@ -257,7 +246,7 @@ class MainActivity : AppCompatActivity() {
     /**
      * Adapted from https://jongladwin.blogspot.com/2010/03/android-play-pcmwav-audio-buffer-using.html
      */
-    private fun playFile() {
+    private fun startPlayback() {
         doAsync {
 
             // read file
@@ -311,24 +300,24 @@ class MainActivity : AppCompatActivity() {
             }
 
             uiThread {
-                stopFile()
+                stopPlayback()
             }
         }
     }
 
-    private fun resume() {
+    private fun resumePlayback() {
         debugToast(this, "Resuming.")
         isPaused = false
         playbackInProgress = true
     }
 
-    private fun pause() {
+    private fun pausePlayback() {
         debugToast(this, "Paused.")
         isPaused = true
         playbackInProgress = false
     }
 
-    private fun stopFile() {
+    private fun stopPlayback() {
         inputStream?.close()
         inputStream = null
         if (audio != null && playbackInProgress) debugToast(this, "Stopped.")
