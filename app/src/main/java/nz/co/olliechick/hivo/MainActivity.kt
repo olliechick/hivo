@@ -12,6 +12,7 @@ import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
@@ -60,6 +61,8 @@ class MainActivity : AppCompatActivity() {
     private var isPaused = false
     private var bytesread = 0
 
+    // Lifecycle methods
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -87,6 +90,8 @@ class MainActivity : AppCompatActivity() {
             if (dateString == null) promptForFilenameAndSave()
             else saveWav(dateString)
         }
+
+//        seekBar.setOnSeekBarChangeListener {}
     }
 
     override fun onResume() {
@@ -99,6 +104,8 @@ class MainActivity : AppCompatActivity() {
 
         stopRecording()
     }
+
+    // Options menu
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         super.onCreateOptionsMenu(menu)
@@ -133,6 +140,8 @@ class MainActivity : AppCompatActivity() {
 
         else -> super.onOptionsItemSelected(item)
     }
+
+    // Permissions
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -172,6 +181,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Recording audio
+
     private fun startRecording() {
         toast("Recording started.")
         Util.saveStartTime(getDefaultSharedPreferences(this))
@@ -200,6 +211,43 @@ class MainActivity : AppCompatActivity() {
         recorder = null
         recordingThread = null
     }
+
+    private inner class RecordingRunnable : Runnable {
+
+        override fun run() {
+            val file = getRawFile(this@MainActivity)
+            val buffer = ByteBuffer.allocateDirect(BUFFER_SIZE)
+
+            try {
+                FileOutputStream(file).use { outStream ->
+                    while (recordingInProgress.get()) {
+                        val result = recorder!!.read(buffer, BUFFER_SIZE)
+                        if (result < 0) {
+                            throw RuntimeException(
+                                "Reading of audio buffer failed: " + getBufferReadFailureReason(result)
+                            )
+                        }
+                        outStream.write(buffer.array(), 0, BUFFER_SIZE)
+                        buffer.clear()
+                    }
+                }
+            } catch (e: IOException) {
+                throw RuntimeException("Writing of recorded audio failed", e)
+            }
+        }
+
+        private fun getBufferReadFailureReason(errorCode: Int): String {
+            return when (errorCode) {
+                AudioRecord.ERROR_INVALID_OPERATION -> "ERROR_INVALID_OPERATION"
+                AudioRecord.ERROR_BAD_VALUE -> "ERROR_BAD_VALUE"
+                AudioRecord.ERROR_DEAD_OBJECT -> "ERROR_DEAD_OBJECT"
+                AudioRecord.ERROR -> "ERROR"
+                else -> "Unknown ($errorCode)"
+            }
+        }
+    }
+
+    // Playing audio
 
     /**
      * Adapted from https://jongladwin.blogspot.com/2010/03/android-play-pcmwav-audio-buffer-using.html
@@ -239,6 +287,8 @@ class MainActivity : AppCompatActivity() {
             val size = file.length().toInt()
             audio.play()
             while (bytesread < size) {
+                seekBar.progress = (bytesread * 100) / size
+                Log.i("FOO", "$bytesread / $size = ${seekBar.progress}")
                 if (isPaused) {
                     audio.pause()
                 } else {
@@ -269,7 +319,6 @@ class MainActivity : AppCompatActivity() {
         playbackInProgress = true
     }
 
-
     private fun pause() {
         Toast.makeText(this, "Paused.", Toast.LENGTH_SHORT).run {
             setGravity(Gravity.CENTER, 0, 0)
@@ -290,6 +339,8 @@ class MainActivity : AppCompatActivity() {
         audio.release()
         playbackInProgress = false
     }
+
+    // Saving audio
 
     private fun saveWav(filename: String) {
         toast("Saving...")
@@ -315,41 +366,6 @@ class MainActivity : AppCompatActivity() {
 
         builder.create()
         builder.show()
-    }
-
-    private inner class RecordingRunnable : Runnable {
-
-        override fun run() {
-            val file = getRawFile(this@MainActivity)
-            val buffer = ByteBuffer.allocateDirect(BUFFER_SIZE)
-
-            try {
-                FileOutputStream(file).use { outStream ->
-                    while (recordingInProgress.get()) {
-                        val result = recorder!!.read(buffer, BUFFER_SIZE)
-                        if (result < 0) {
-                            throw RuntimeException(
-                                "Reading of audio buffer failed: " + getBufferReadFailureReason(result)
-                            )
-                        }
-                        outStream.write(buffer.array(), 0, BUFFER_SIZE)
-                        buffer.clear()
-                    }
-                }
-            } catch (e: IOException) {
-                throw RuntimeException("Writing of recorded audio failed", e)
-            }
-        }
-
-        private fun getBufferReadFailureReason(errorCode: Int): String {
-            return when (errorCode) {
-                AudioRecord.ERROR_INVALID_OPERATION -> "ERROR_INVALID_OPERATION"
-                AudioRecord.ERROR_BAD_VALUE -> "ERROR_BAD_VALUE"
-                AudioRecord.ERROR_DEAD_OBJECT -> "ERROR_DEAD_OBJECT"
-                AudioRecord.ERROR -> "ERROR"
-                else -> "Unknown ($errorCode)"
-            }
-        }
     }
 
     companion object {
