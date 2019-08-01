@@ -134,7 +134,7 @@ class Util {
         fun getDateString(context: Context): String? {
             val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
             val name = sharedPreferences.getString(filenameKey, null)
-            val now = Date().apply { time = sharedPreferences.getLong(startTimeKey, 0) }//Date().time)}
+            val now = Date().apply { time = sharedPreferences.getLong(startTimeKey, Date().time)}
 
             return if (name == null) null // shouldn't happen
             else getDateString(context, FilenameFormat.valueOf(name), now)
