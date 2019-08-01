@@ -3,6 +3,8 @@ package nz.co.olliechick.hivo
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Environment
+import android.view.Gravity
+import android.widget.Toast
 import androidx.preference.PreferenceManager
 import java.io.*
 import java.nio.ByteBuffer
@@ -142,6 +144,16 @@ class Util {
             val prefsEditor = prefs.edit()
             prefsEditor.putLong(startTimeKey, Date().time)
             prefsEditor.apply()
+        }
+
+        /**
+         * This is just for debug purposes, and should be removed for the delivered product.
+         */
+        fun debugToast(context: Context, text: String) {
+            Toast.makeText(context, text, Toast.LENGTH_SHORT).run {
+                setGravity(Gravity.CENTER, 0, 300)
+                show()
+            }
         }
     }
 }

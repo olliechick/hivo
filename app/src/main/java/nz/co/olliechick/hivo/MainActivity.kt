@@ -13,18 +13,16 @@ import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
-import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
 import androidx.core.app.ActivityCompat
 import androidx.appcompat.app.AppCompatActivity
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.save_filename_dialog.view.*
+import nz.co.olliechick.hivo.Util.Companion.debugToast
 import nz.co.olliechick.hivo.Util.Companion.getDateString
 import nz.co.olliechick.hivo.Util.Companion.getPublicDirectory
 import nz.co.olliechick.hivo.Util.Companion.getRawFile
@@ -57,7 +55,7 @@ class MainActivity : AppCompatActivity() {
 
     private var recordingThread: Thread? = null
 
-    private lateinit var audio: AudioTrack
+    private var audio: AudioTrack? = null
     private var inputStream: FileInputStream? = null
     private var isPaused = false
     private var bytesread = 0
@@ -72,11 +70,13 @@ class MainActivity : AppCompatActivity() {
 
         recordingSwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
-                enableScreen()
                 startRecording()
+                enableScreen()
+                seekBar.progress = 0
             } else {
-                disableScreen()
                 stopRecording()
+                disableScreen()
+                stopFile()
             }
         }
 
@@ -122,12 +122,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         R.id.scheduled_recordings -> {
-            toast("Not yet implemented")
+            debugToast(this, "Not yet implemented")
             true
         }
 
         R.id.past_recordings -> {
-            toast("Not yet implemented")
+            debugToast(this, "Not yet implemented")
             true
         }
 
@@ -157,8 +157,7 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 402) {
             if (PackageManager.PERMISSION_DENIED in grantResults) {
-                Toast.makeText(this, "You will have to grant permissions to be able to record.", Toast.LENGTH_SHORT)
-                    .show()
+                toast("You will have to grant permissions to be able to record.")
                 finishAffinity()
             } else {
                 startRecording()
@@ -190,7 +189,7 @@ class MainActivity : AppCompatActivity() {
     // Recording audio
 
     private fun startRecording() {
-        toast("Recording started.")
+        debugToast(this, "Recording started.")
         Util.saveStartTime(getDefaultSharedPreferences(this))
         recorder = AudioRecord(
             MediaRecorder.AudioSource.DEFAULT, SAMPLING_RATE_IN_HZ,
@@ -206,11 +205,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun stopRecording() {
-        if (null == recorder) {
-            return
-        }
+        if (null == recorder) return
 
-        toast("Recording stopped.")
+        debugToast(this, "Recording stopped.")
         recordingInProgress.set(false)
         recorder!!.stop()
         recorder!!.release()
@@ -272,6 +269,7 @@ class MainActivity : AppCompatActivity() {
                 } catch (e: FileNotFoundException) {
                     uiThread {
                         toast(getString(R.string.no_file_found))
+                        // Note that the user should never get here - if they click play, they are already recording
                     }
                     return@doAsync
                 }
@@ -291,19 +289,19 @@ class MainActivity : AppCompatActivity() {
             } else isPaused = false
 
             val size = file.length().toInt()
-            audio.play()
+            audio!!.play()
             while (bytesread < size) {
                 seekBar.progress = (bytesread * 100) / size
                 // Log.i("FOO", "$bytesread / $size = ${seekBar.progress}")
                 if (isPaused) {
-                    audio.pause()
+                    audio!!.pause()
                 } else {
-                    audio.play()
-                    if (inputStream != null && audio.state == AudioTrack.STATE_INITIALIZED) {
+                    audio!!.play()
+                    if (inputStream != null && audio!!.state == AudioTrack.STATE_INITIALIZED) {
                         val ret = inputStream?.read(byteData, 0, count)
                         if (ret != null && ret != -1) {
                             // Write the byte array to the track
-                            audio.write(byteData, 0, ret)
+                            audio!!.write(byteData, 0, ret)
                             bytesread += ret
                         } else break
                     } else break
@@ -317,43 +315,36 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun resume() {
-        Toast.makeText(this, "Resuming.", Toast.LENGTH_SHORT).run {
-            setGravity(Gravity.CENTER, 0, 0)
-            show()
-        }
+        debugToast(this, "Resuming.")
         isPaused = false
         playbackInProgress = true
     }
 
     private fun pause() {
-        Toast.makeText(this, "Paused.", Toast.LENGTH_SHORT).run {
-            setGravity(Gravity.CENTER, 0, 0)
-            show()
-        }
+        debugToast(this, "Paused.")
         isPaused = true
         playbackInProgress = false
     }
 
     private fun stopFile() {
-        Toast.makeText(this, "Stopped.", Toast.LENGTH_SHORT).run {
-            setGravity(Gravity.CENTER, 0, 0)
-            show()
-        }
+        debugToast(this, "Stopped.")
         inputStream?.close()
         inputStream = null
-        audio.stop()
-        audio.release()
+        audio?.takeIf { playbackInProgress }?.run {
+            stop()
+            release()
+        }
         playbackInProgress = false
     }
 
     // Saving audio
 
     private fun saveWav(filename: String) {
-        toast("Saving...")
+        debugToast(this, "Saving...")
         val rawFile = getRawFile(this)
         val waveFile = File(getPublicDirectory(this), filename)
         Util.rawToWave(rawFile, waveFile, SAMPLING_RATE_IN_HZ)
-        toast("Saved.")
+        debugToast(this, "Saved.")
     }
 
     @SuppressLint("InflateParams")
@@ -387,8 +378,7 @@ class MainActivity : AppCompatActivity() {
         if (clickable) {
             linearLayout.setBackgroundColor(Color.rgb(255, 255, 255))
             playPauseButton.colorFilter = null
-        }
-        else {
+        } else {
             linearLayout.setBackgroundColor(Color.GRAY)
             playPauseButton.setColorFilter(Color.DKGRAY)
         }
