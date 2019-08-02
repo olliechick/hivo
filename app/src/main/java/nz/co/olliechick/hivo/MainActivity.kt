@@ -113,7 +113,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         R.id.scheduled_recordings -> {
-            debugToast(this, "Not yet implemented")
+            val intent = Intent(this, RecordingActivity::class.java)
+            startActivity(intent)
+//            debugToast(this, "Not yet implemented")todo
             true
         }
 
