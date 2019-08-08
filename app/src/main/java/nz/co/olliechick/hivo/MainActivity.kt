@@ -253,7 +253,7 @@ class MainActivity : AppCompatActivity() {
 
             // read file
             val file = getRawFile(this@MainActivity)
-            val count = 512 * 1024 // 512 kb
+            val count = 1024 // 1 kb
             val byteData = ByteArray(count)
 
             if (inputStream == null) {
