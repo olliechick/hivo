@@ -4,7 +4,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioRecord
@@ -13,6 +12,7 @@ import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.view.Menu
 import android.view.MenuItem
 import androidx.core.app.ActivityCompat
@@ -33,6 +33,8 @@ import org.jetbrains.anko.uiThread
 import java.io.*
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.experimental.and
+import kotlin.math.abs
 
 
 class MainActivity : AppCompatActivity() {
@@ -59,6 +61,15 @@ class MainActivity : AppCompatActivity() {
     private var inputStream: FileInputStream? = null
     private var isPaused = false
     private var bytesread = 0
+    private var amplitude = 0
+
+    private val handler = Handler()
+    private val updater: Runnable = object : Runnable {
+        override fun run() {
+            handler.postDelayed(this, 1)
+            seekBar.addAmplitude(amplitude)
+        }
+    }
 
     // Lifecycle methods
 
@@ -71,11 +82,8 @@ class MainActivity : AppCompatActivity() {
         recordingSwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 startRecording()
-                enableScreen()
-                seekBar.progress = 0
             } else {
                 stopRecording()
-                disableScreen()
                 stopPlayback()
             }
         }
@@ -97,9 +105,7 @@ class MainActivity : AppCompatActivity() {
             else saveWav(dateString)
         }
 
-//        seekBar.setOnSeekBarChangeListener {}
-
-        disableScreen()
+        handler.post(updater)
     }
 
     // Options menu
@@ -218,6 +224,7 @@ class MainActivity : AppCompatActivity() {
                 FileOutputStream(file).use { outStream ->
                     while (recordingInProgress.get()) {
                         val result = recorder!!.read(buffer, BUFFER_SIZE)
+                        amplitude = abs((((buffer[0] and 0xff.toByte()).toInt() shl 8) or buffer[1].toInt()))
                         if (result < 0) {
                             throw RuntimeException(
                                 "Reading of audio buffer failed: " + getBufferReadFailureReason(result)
@@ -284,8 +291,6 @@ class MainActivity : AppCompatActivity() {
             val size = file.length().toInt()
             audio!!.play()
             while (bytesread < size) {
-                seekBar.progress = (bytesread * 100) / size
-                // Log.i("FOO", "$bytesread / $size = ${seekBar.progress}")
                 if (isPaused) {
                     audio!!.pause()
                 } else {
@@ -328,10 +333,9 @@ class MainActivity : AppCompatActivity() {
             release()
         }
         playbackInProgress = false
-        seekBar.progress = 0
     }
 
-    // Saving audio
+// Saving audio
 
     private fun saveWav(filename: String) {
         toast(getString(R.string.saving))
@@ -358,29 +362,6 @@ class MainActivity : AppCompatActivity() {
         builder.create()
         builder.show()
     }
-
-    // UI
-
-    private fun changeScreenClickability(clickable: Boolean) {
-        arrayOf(playPauseButton, saveButton, seekBar).forEach {
-            it.run {
-                isClickable = clickable
-                isEnabled = clickable
-            }
-        }
-
-        if (clickable) {
-            linearLayout.setBackgroundColor(Color.rgb(255, 255, 255))
-            playPauseButton.colorFilter = null
-        } else {
-            linearLayout.setBackgroundColor(Color.GRAY)
-            playPauseButton.setColorFilter(Color.DKGRAY)
-        }
-    }
-
-    private fun enableScreen() = changeScreenClickability(true)
-    private fun disableScreen() = changeScreenClickability(false)
-
 
     companion object {
 
