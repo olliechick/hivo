@@ -63,14 +63,6 @@ class MainActivity : AppCompatActivity() {
     private var bytesread = 0
     private var amplitude = 0
 
-    private val handler = Handler()
-    private val updater: Runnable = object : Runnable {
-        override fun run() {
-            handler.postDelayed(this, 1)
-            seekBar.addAmplitude(amplitude)
-        }
-    }
-
     // Lifecycle methods
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -104,8 +96,6 @@ class MainActivity : AppCompatActivity() {
             if (dateString == null) promptForFilenameAndSave()
             else saveWav(dateString)
         }
-
-        handler.post(updater)
     }
 
     // Options menu
@@ -225,6 +215,7 @@ class MainActivity : AppCompatActivity() {
                     while (recordingInProgress.get()) {
                         val result = recorder!!.read(buffer, BUFFER_SIZE)
                         amplitude = abs((((buffer[0] and 0xff.toByte()).toInt() shl 8) or buffer[1].toInt()))
+                        seekBar.addAmplitude(amplitude)
                         if (result < 0) {
                             throw RuntimeException(
                                 "Reading of audio buffer failed: " + getBufferReadFailureReason(result)
@@ -335,7 +326,7 @@ class MainActivity : AppCompatActivity() {
         playbackInProgress = false
     }
 
-// Saving audio
+    // Saving audio
 
     private fun saveWav(filename: String) {
         toast(getString(R.string.saving))
