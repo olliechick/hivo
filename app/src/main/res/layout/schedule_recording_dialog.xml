@@ -29,7 +29,6 @@
         android:layout_below="@id/name"
         android:fontFamily="sans-serif"
         android:gravity="start|center_vertical"
-        android:text="[start date]"
         android:textAllCaps="false"
         android:textSize="18sp" />
 
@@ -41,7 +40,6 @@
         android:layout_below="@id/startDateButton"
         android:fontFamily="sans-serif"
         android:gravity="start|center_vertical"
-        android:text="[end date]"
         android:textAllCaps="false"
         android:textSize="18sp" />
 
@@ -57,7 +55,6 @@
         android:layout_alignParentStart="false"
         android:layout_alignParentLeft="false"
         android:fontFamily="sans-serif"
-        android:text="[start time]"
         android:textAllCaps="false"
         android:textSize="18sp" />
 
@@ -72,7 +69,6 @@
         android:layout_alignParentStart="false"
         android:layout_alignParentLeft="false"
         android:fontFamily="sans-serif"
-        android:text="[end time]"
         android:textAllCaps="false"
         android:textSize="18sp" />
 
