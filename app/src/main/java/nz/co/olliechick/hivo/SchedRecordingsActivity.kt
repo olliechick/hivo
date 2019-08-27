@@ -122,7 +122,7 @@ class SchedRecordingsActivity : AppCompatActivity() {
     private fun showTimePicker(context: Context, date: Calendar, setTimeCallback: (Calendar) -> Unit) {
         TimePickerDialog(context, TimePickerDialog.OnTimeSetListener { _, hourOfDay, minute ->
             date.apply {
-                set(Calendar.HOUR, hourOfDay)
+                set(Calendar.HOUR_OF_DAY, hourOfDay)
                 set(Calendar.MINUTE, minute)
             }
             setTimeCallback(date)
