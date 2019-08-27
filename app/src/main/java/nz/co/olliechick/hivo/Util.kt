@@ -2,6 +2,7 @@ package nz.co.olliechick.hivo
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.graphics.Color
 import android.os.Environment
 import android.view.Gravity
 import android.widget.Toast
@@ -20,6 +21,8 @@ class Util {
         private const val filenameKey = "filename" //also defined in root_preferences.xml
         private const val bufferKey = "buffer"
         const val defaultBuffer = 60 //minutes
+        const val invalidColour = Color.RED
+        const val validColour = Color.BLACK
 
         // adapted from https://stackoverflow.com/a/37436599/8355496
         @Throws(IOException::class)

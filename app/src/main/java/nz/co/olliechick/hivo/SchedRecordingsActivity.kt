@@ -16,6 +16,7 @@ import android.widget.Button
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.schedule_recording_dialog.view.*
 import nz.co.olliechick.hivo.Util.Companion.usesCustomFilename
+import org.jetbrains.anko.textColor
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -23,6 +24,8 @@ import java.util.*
 class SchedRecordingsActivity : AppCompatActivity() {
 
     private var view: View? = null
+    private lateinit var schedRecording: SchedRecording
+
     var recordings: ArrayList<String> = arrayListOf("Initial item")
         set(value) {
             Log.i("FOO", "set ${field[0]}")
@@ -53,45 +56,68 @@ class SchedRecordingsActivity : AppCompatActivity() {
 
     @SuppressLint("InflateParams")
     private fun openScheduleRecordingDialog(startDate: Calendar, endDate: Calendar) {
+        schedRecording = SchedRecording(startDate, endDate)
+
         val builder = AlertDialog.Builder(this)
         view = layoutInflater.inflate(R.layout.schedule_recording_dialog, null)
         if (!usesCustomFilename(this)) {
             view!!.name.visibility = View.GONE
         }
 
-        builder.setView(view)
-        builder.setTitle(getString(R.string.schedule_recording))
+        builder.run {
+            setView(view)
+            setTitle(getString(R.string.schedule_recording))
+            setPositiveButton(getString(R.string.schedule), null) // will be overridden
+            setNegativeButton(getString(R.string.cancel)) { dialog, _ -> dialog.cancel() }
+        }
 
         initialiseDateTimes(startDate, endDate)
 
-        view?.startDateButton?.onClick {
-            showDatePicker(this, startDate, ::setStartDate)
-        }
+        view?.run {
+            startDateButton?.onClick {
+                showDatePicker(this@SchedRecordingsActivity, startDate, ::setStartDate)
+            }
 
-        view?.endDateButton?.onClick {
-            showDatePicker(this, endDate, ::setEndDate)
-        }
+            endDateButton?.onClick {
+                showDatePicker(this@SchedRecordingsActivity, endDate, ::setEndDate)
+            }
 
-        view?.startTimeButton?.onClick {
-            showTimePicker(this, startDate, ::setStartTime)
-        }
+            startTimeButton?.onClick {
+                showTimePicker(this@SchedRecordingsActivity, startDate, ::setStartTime)
+            }
 
-        view?.endTimeButton?.onClick {
-            showTimePicker(this, endDate, ::setEndTime)
-        }
-
-        // Set up the bottom buttonbar
-        builder.setPositiveButton(getString(R.string.schedule)) { _, _ ->
-            run {
-                toast("Scheduling...")
-                recordings.add("new")
-                list.adapter?.notifyDataSetChanged()
+            endTimeButton?.onClick {
+                showTimePicker(this@SchedRecordingsActivity, endDate, ::setEndTime)
             }
         }
-        builder.setNegativeButton(getString(R.string.cancel)) { dialog, _ -> dialog.cancel() }
 
-        builder.create()
-        builder.show()
+        val dialog = builder.create()
+
+        // Override positive button, so that it only dismisses if validation passes
+        dialog.setOnShowListener {
+            Log.i("FOO", "${dialog.getButton(AlertDialog.BUTTON_POSITIVE)}")
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                var filename = view?.name?.input?.text?.toString()
+                if (filename == null || filename == "") filename = "(no title)"
+
+                if (!schedRecording.hasValidDate()) {
+                    val alertDialog = AlertDialog.Builder(this).create()
+                    alertDialog.setMessage("Start time cannot be after the end time.")
+                    alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK") { dialog, _ -> dialog.dismiss() }
+                    alertDialog.show()
+
+                } else {
+                    toast("Scheduling...")
+                    recordings.add(filename) //todo fix
+                    list.adapter?.notifyDataSetChanged()
+                    schedRecording.schedule()
+                    dialog.dismiss()
+
+                }
+            }
+        }
+
+        dialog.show()
 
     }
 
@@ -104,7 +130,7 @@ class SchedRecordingsActivity : AppCompatActivity() {
 
     /**
      * Opens a date picker initialised to date.
-     * It then calls setDateCallback with the datetime the user picked.
+     * It then calls setDateCallback with the date the user picked.
      */
     private fun showDatePicker(context: Context, date: Calendar, setDateCallback: (Calendar) -> Unit) {
         DatePickerDialog(context, DatePickerDialog.OnDateSetListener { _, year, monthOfYear, dayOfMonth ->
@@ -119,6 +145,10 @@ class SchedRecordingsActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Opens a time picker initialised to date.
+     * It then calls setTimeCallback with the time the user picked.
+     */
     private fun showTimePicker(context: Context, date: Calendar, setTimeCallback: (Calendar) -> Unit) {
         TimePickerDialog(context, TimePickerDialog.OnTimeSetListener { _, hourOfDay, minute ->
             date.apply {
@@ -141,17 +171,35 @@ class SchedRecordingsActivity : AppCompatActivity() {
 
     private fun setStartDate(date: Calendar) {
         view?.startDateButton?.run { setDate(date, this) }
+        schedRecording.startDate = date
+        validate()
     }
 
     private fun setEndDate(date: Calendar) {
         view?.endDateButton?.run { setDate(date, this) }
+        schedRecording.endDate = date
+        validate()
     }
 
     private fun setStartTime(date: Calendar) {
         view?.startTimeButton?.run { setTime(date, this) }
+        schedRecording.startDate = date
+        validate()
     }
 
     private fun setEndTime(date: Calendar) {
         view?.endTimeButton?.run { setTime(date, this) }
+        schedRecording.endDate = date
+        validate()
+    }
+
+    private fun validate() {
+        if (!schedRecording.hasValidDate()) {
+            view?.startDateButton?.textColor = Util.invalidColour
+            view?.startTimeButton?.textColor = Util.invalidColour
+        } else {
+            view?.startDateButton?.textColor = Util.validColour
+            view?.startTimeButton?.textColor = Util.validColour
+        }
     }
 }
