@@ -16,8 +16,10 @@ import java.util.*
 class Util {
     companion object {
         const val prefsFile = "me.olliechick.instagramunfollowers.prefs"
-        const val startTimeKey = "start_time"
-        const val filenameKey = "filename" //also defined in root_preferences.xml
+        private const val startTimeKey = "start_time"
+        private const val filenameKey = "filename" //also defined in root_preferences.xml
+        private const val bufferKey = "buffer"
+        const val defaultBuffer = 60 //minutes
 
         // adapted from https://stackoverflow.com/a/37436599/8355496
         @Throws(IOException::class)
@@ -111,13 +113,14 @@ class Util {
             }
         }
 
-        fun getPublicDirectory(context: Context): File? {
-            val file = File(Environment.getExternalStorageDirectory(), context.getString(R.string.hivo_recordings))
-            file.mkdirs()
-            return file
-        }
+        fun getPublicDirectory(context: Context): File? = File(
+            Environment.getExternalStorageDirectory(),
+            context.getString(R.string.hivo_recordings)
+        ).apply { mkdirs() }
+
 
         private fun getPrivateDirectory(context: Context): File = context.filesDir
+
         fun getRawFile(context: Context) =
             File(getPrivateDirectory(context), context.getString(R.string.raw_recording_filename))
 
@@ -134,17 +137,25 @@ class Util {
         fun getDateString(context: Context): String? {
             val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
             val name = sharedPreferences.getString(filenameKey, null)
-            val now = Date().apply { time = sharedPreferences.getLong(startTimeKey, Date().time)}
+            val now = Date().apply { time = sharedPreferences.getLong(startTimeKey, Date().time) }
 
             return if (name == null) null // shouldn't happen
             else getDateString(context, FilenameFormat.valueOf(name), now)
         }
+
+        /** Returns maximum record time in minutes */
+        fun getMaximumRecordTime(context: Context): Int =
+            PreferenceManager.getDefaultSharedPreferences(context).getString(bufferKey, "")?.toInt() ?: defaultBuffer
+
+
+        fun usesCustomFilename(context: Context) = getDateString(context) == null
 
         fun saveStartTime(prefs: SharedPreferences) {
             val prefsEditor = prefs.edit()
             prefsEditor.putLong(startTimeKey, Date().time)
             prefsEditor.apply()
         }
+
 
         /**
          * This is just for debug purposes, and should be removed for the delivered product.

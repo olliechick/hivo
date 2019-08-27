@@ -9,8 +9,8 @@
     <string name="title_activity_settings">Settings</string>
     <string name="filename_format">Filename format</string>
     <string name="settings">Settings</string>
-    <string name="scheduled_recordings">Scheduled recordings</string>
-    <string name="past_recordings">Past recordings</string>
+    <string name="scheduled_recordings">Scheduled Recordings</string>
+    <string name="past_recordings">Past Recordings</string>
     <string name="help">Help</string>
     <string name="support">Support</string>
     <string name="send_feedback">Send feedback</string>
@@ -29,4 +29,6 @@
     <string name="play_pause_button">play/pause button</string>
     <string name="saving">Saving…</string>
     <string name="saved">Saved.</string>
+    <string name="schedule">Schedule</string>
+    <string name="schedule_recording">Schedule recording</string>
 </resources>

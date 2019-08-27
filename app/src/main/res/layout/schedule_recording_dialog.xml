@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/enter_a_filename">
+
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingEnd="80dp"
+            android:paddingRight="80dp"
+            tools:ignore="RtlSymmetry" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <Button
+        android:id="@+id/startDateButton"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/name"
+        android:fontFamily="sans-serif"
+        android:gravity="start|center_vertical"
+        android:text="[start date]"
+        android:textAllCaps="false"
+        android:textSize="18sp" />
+
+    <Button
+        android:id="@+id/endDateButton"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/startDateButton"
+        android:fontFamily="sans-serif"
+        android:gravity="start|center_vertical"
+        android:text="[end date]"
+        android:textAllCaps="false"
+        android:textSize="18sp" />
+
+    <Button
+        android:id="@+id/startTimeButton"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/endDateButton"
+        android:layout_alignTop="@+id/startDateButton"
+        android:layout_alignEnd="@+id/startDateButton"
+        android:layout_alignRight="@+id/startDateButton"
+        android:layout_alignParentStart="false"
+        android:layout_alignParentLeft="false"
+        android:fontFamily="sans-serif"
+        android:text="[start time]"
+        android:textAllCaps="false"
+        android:textSize="18sp" />
+
+    <Button
+        android:id="@+id/endTimeButton"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/endDateButton"
+        android:layout_alignEnd="@+id/endDateButton"
+        android:layout_alignRight="@+id/endDateButton"
+        android:layout_alignParentStart="false"
+        android:layout_alignParentLeft="false"
+        android:fontFamily="sans-serif"
+        android:text="[end time]"
+        android:textAllCaps="false"
+        android:textSize="18sp" />
+
+</RelativeLayout>
