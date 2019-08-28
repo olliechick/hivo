@@ -33,6 +33,11 @@
             </intent-filter>
         </activity>
         <activity android:name=".RecordingActivity" />
+        <receiver
+            android:name=".SchedRecordingReceiver"
+            android:enabled="true"
+            android:exported="true">
+        </receiver>
     </application>
 
 </manifest>

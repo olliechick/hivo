@@ -1,22 +1,22 @@
 package nz.co.olliechick.hivo
 
 import android.annotation.SuppressLint
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import androidx.appcompat.app.AlertDialog
-import kotlinx.android.synthetic.main.activity_sched_recordings.*
-import org.jetbrains.anko.onClick
-import org.jetbrains.anko.toast
-import android.app.TimePickerDialog
 import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.content.Context
+import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import kotlinx.android.synthetic.main.activity_sched_recordings.*
 import kotlinx.android.synthetic.main.schedule_recording_dialog.view.*
 import nz.co.olliechick.hivo.Util.Companion.usesCustomFilename
+import org.jetbrains.anko.onClick
 import org.jetbrains.anko.textColor
+import org.jetbrains.anko.toast
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -95,7 +95,6 @@ class SchedRecordingsActivity : AppCompatActivity() {
 
         // Override positive button, so that it only dismisses if validation passes
         dialog.setOnShowListener {
-            Log.i("FOO", "${dialog.getButton(AlertDialog.BUTTON_POSITIVE)}")
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 var filename = view?.name?.input?.text?.toString()
                 if (filename == null || filename == "") filename = "(no title)"
@@ -110,9 +109,8 @@ class SchedRecordingsActivity : AppCompatActivity() {
                     toast("Scheduling...")
                     recordings.add(filename) //todo fix
                     list.adapter?.notifyDataSetChanged()
-                    schedRecording.schedule()
+                    schedRecording.schedule(applicationContext)
                     dialog.dismiss()
-
                 }
             }
         }
@@ -122,6 +120,9 @@ class SchedRecordingsActivity : AppCompatActivity() {
     }
 
     private fun initialiseDateTimes(startDate: Calendar, endDate: Calendar) {
+        startDate.apply { set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }
+        endDate.apply { set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }
+
         setStartDate(startDate)
         setStartTime(startDate)
         setEndDate(endDate)
