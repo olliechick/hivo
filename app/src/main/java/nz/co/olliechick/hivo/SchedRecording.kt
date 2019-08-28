@@ -9,6 +9,8 @@ import java.util.*
 
 
 class SchedRecording(var startDate: Calendar, var endDate: Calendar) {
+    var filename: String? = null
+
     fun schedule(applicationContext: Context) {
         val alarmManager = applicationContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 

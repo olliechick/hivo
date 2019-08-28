@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_sched_recordings.*
 import kotlinx.android.synthetic.main.schedule_recording_dialog.view.*
+import nz.co.olliechick.hivo.Util.Companion.getDateString
 import nz.co.olliechick.hivo.Util.Companion.usesCustomFilename
 import org.jetbrains.anko.onClick
 import org.jetbrains.anko.textColor
@@ -57,6 +58,8 @@ class SchedRecordingsActivity : AppCompatActivity() {
         view = layoutInflater.inflate(R.layout.schedule_recording_dialog, null)
         if (!usesCustomFilename(this)) {
             view!!.name.visibility = View.GONE
+            schedRecording.filename = getDateString(this)
+            Log.i("FOO", schedRecording.filename)
         }
 
         builder.run {
@@ -80,8 +83,9 @@ class SchedRecordingsActivity : AppCompatActivity() {
         // Override positive button, so that it only dismisses if validation passes
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                var filename = view?.name?.input?.text?.toString()
-                if (filename == null || filename == "") filename = "(no title)"
+                val inputFilename = view?.name?.input?.text?.toString()
+                if (schedRecording.filename == null && (inputFilename == null || inputFilename == ""))
+                    schedRecording.filename = "(no title)"
 
                 if (!schedRecording.hasValidDate()) {
                     val alertDialog = AlertDialog.Builder(this).create()
@@ -92,8 +96,8 @@ class SchedRecordingsActivity : AppCompatActivity() {
                 } else {
                     toast("Scheduling...")
 
-                    recordings.add(filename) //todo fix
-                    list.adapter?.notifyDataSetChanged()
+                    recordings.add(schedRecording.filename!!)
+                    list.adapter?.notifyItemInserted(recordings.size - 1)
 
                     schedRecording.schedule(applicationContext)
                     dialog.dismiss()
