@@ -43,12 +43,8 @@ class SchedRecordingsActivity : AppCompatActivity() {
         supportActionBar?.title = getString(R.string.scheduled_recordings)
 
         fab.onClick {
-            openScheduleRecordingDialog(
-                Calendar.getInstance(),
-                Calendar.getInstance().apply {
-                    add(Calendar.MINUTE, Util.getMaximumRecordTime(this@SchedRecordingsActivity))
-                }
-            )
+            openScheduleRecordingDialog(Calendar.getInstance(),
+                Calendar.getInstance().also { it.add(Calendar.MINUTE, Util.getMaximumRecordTime(this)) })
             val layoutManager = LinearLayoutManager(this)
             list.layoutManager = layoutManager
         }
@@ -74,21 +70,10 @@ class SchedRecordingsActivity : AppCompatActivity() {
         initialiseDateTimes(startDate, endDate)
 
         view?.run {
-            startDateButton?.onClick {
-                showDatePicker(this@SchedRecordingsActivity, startDate, ::setStartDate)
-            }
-
-            endDateButton?.onClick {
-                showDatePicker(this@SchedRecordingsActivity, endDate, ::setEndDate)
-            }
-
-            startTimeButton?.onClick {
-                showTimePicker(this@SchedRecordingsActivity, startDate, ::setStartTime)
-            }
-
-            endTimeButton?.onClick {
-                showTimePicker(this@SchedRecordingsActivity, endDate, ::setEndTime)
-            }
+            startDateButton?.onClick { showDatePicker(this@SchedRecordingsActivity, startDate, ::setStartDate) }
+            endDateButton?.onClick { showDatePicker(this@SchedRecordingsActivity, endDate, ::setEndDate) }
+            startTimeButton?.onClick { showTimePicker(this@SchedRecordingsActivity, startDate, ::setStartTime) }
+            endTimeButton?.onClick { showTimePicker(this@SchedRecordingsActivity, endDate, ::setEndTime) }
         }
 
         val dialog = builder.create()
