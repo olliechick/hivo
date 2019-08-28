@@ -103,7 +103,7 @@ class SchedRecordingsActivity : AppCompatActivity() {
                 if (!schedRecording.hasValidDate()) {
                     val alertDialog = AlertDialog.Builder(this).create()
                     alertDialog.setMessage("Start time cannot be after the end time.")
-                    alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK") { dialog, _ -> dialog.dismiss() }
+                    alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK") { dialog, _ -> dialog.dismiss() }
                     alertDialog.show()
 
                 } else {
