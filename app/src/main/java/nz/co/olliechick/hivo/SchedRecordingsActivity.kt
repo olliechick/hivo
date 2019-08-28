@@ -26,13 +26,10 @@ class SchedRecordingsActivity : AppCompatActivity() {
     private var view: View? = null
     private lateinit var schedRecording: SchedRecording
 
-    var recordings: ArrayList<String> = arrayListOf("Initial item")
+    var recordings: ArrayList<String> = arrayListOf()
         set(value) {
-            Log.i("FOO", "set ${field[0]}")
             field = value
-            val adapter = list.adapter
             list.adapter = SchedRecordingAdapter(this, field)
-            adapter?.notifyDataSetChanged()
         }
 
 
@@ -42,11 +39,13 @@ class SchedRecordingsActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = getString(R.string.scheduled_recordings)
 
+        val layoutManager = LinearLayoutManager(this)
+        list.layoutManager = layoutManager
+        recordings = arrayListOf()
+
         fab.onClick {
             openScheduleRecordingDialog(Calendar.getInstance(),
                 Calendar.getInstance().also { it.add(Calendar.MINUTE, Util.getMaximumRecordTime(this)) })
-            val layoutManager = LinearLayoutManager(this)
-            list.layoutManager = layoutManager
         }
     }
 
@@ -92,8 +91,10 @@ class SchedRecordingsActivity : AppCompatActivity() {
 
                 } else {
                     toast("Scheduling...")
+
                     recordings.add(filename) //todo fix
                     list.adapter?.notifyDataSetChanged()
+
                     schedRecording.schedule(applicationContext)
                     dialog.dismiss()
                 }

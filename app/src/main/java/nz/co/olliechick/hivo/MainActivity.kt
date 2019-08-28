@@ -2,6 +2,7 @@ package nz.co.olliechick.hivo
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioFormat
@@ -69,6 +70,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        initialiseInternalFiles()
         checkPermissions(arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE))
 
         recordingSwitch.setOnCheckedChangeListener { _, isChecked ->
@@ -96,6 +98,11 @@ class MainActivity : AppCompatActivity() {
             if (dateString == null) promptForFilenameAndSave()
             else saveWav(dateString)
         }
+    }
+
+    private fun initialiseInternalFiles() {
+        val schedRecordingsFile = File(filesDir, "schedRecordings")
+        //todo
     }
 
     // Options menu
