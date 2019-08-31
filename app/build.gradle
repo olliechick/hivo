@@ -41,5 +41,5 @@ dependencies {
     implementation "org.jetbrains.anko:anko-sdk15:$anko_version"
     implementation "org.jetbrains.anko:anko-support-v4:$anko_version"
     implementation 'org.jetbrains.anko:anko-appcompat-v7:0.9.1'
-    implementation 'com.google.android.material:material:1.1.0-alpha08'
+    implementation 'com.google.android.material:material:1.1.0-alpha09'
 }

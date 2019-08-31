@@ -42,10 +42,10 @@ class SettingsActivity : AppCompatActivity() {
             val now = Date()
 
             val entries = arrayOfNulls<String>(numberOfItems)
-            activity?.applicationContext?.let { context ->
+            activity?.applicationContext?.let {
                 arrayListOf<String>().apply {
                     FilenameFormat.values().forEach {
-                        this.add(Util.getDateString(context, it, now) ?: getString(R.string.specify_on_save))
+                        this.add(Util.getDateString(it, now) ?: getString(R.string.specify_on_save))
                     }
                 }.toArray(entries)
             }

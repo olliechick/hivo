@@ -2,7 +2,6 @@ package nz.co.olliechick.hivo
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioFormat
@@ -13,7 +12,6 @@ import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
 import android.view.Menu
 import android.view.MenuItem
 import androidx.core.app.ActivityCompat
@@ -24,9 +22,9 @@ import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.save_filename_dialog.view.*
 import nz.co.olliechick.hivo.Util.Companion.debugToast
-import nz.co.olliechick.hivo.Util.Companion.getDateString
-import nz.co.olliechick.hivo.Util.Companion.getPublicDirectory
+import nz.co.olliechick.hivo.Util.Companion.getFilenameForCurrentRecording
 import nz.co.olliechick.hivo.Util.Companion.getRawFile
+import nz.co.olliechick.hivo.Util.Companion.saveWav
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.image
 import org.jetbrains.anko.toast
@@ -70,7 +68,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        initialiseInternalFiles()
         checkPermissions(arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE))
 
         recordingSwitch.setOnCheckedChangeListener { _, isChecked ->
@@ -94,15 +91,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         saveButton.setOnClickListener {
-            val dateString = getDateString(this)
+            val dateString = getFilenameForCurrentRecording(this)
             if (dateString == null) promptForFilenameAndSave()
             else saveWav(dateString)
         }
-    }
-
-    private fun initialiseInternalFiles() {
-        val schedRecordingsFile = File(filesDir, "schedRecordings")
-        //todo
     }
 
     // Options menu
@@ -338,9 +330,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun saveWav(filename: String) {
         toast(getString(R.string.saving))
-        val rawFile = getRawFile(this)
-        val waveFile = File(getPublicDirectory(this), filename)
-        Util.rawToWave(rawFile, waveFile, SAMPLING_RATE_IN_HZ)
+        saveWav(filename, this, SAMPLING_RATE_IN_HZ)
         toast(getString(R.string.saved))
     }
 
@@ -354,7 +344,9 @@ class MainActivity : AppCompatActivity() {
 
         // Set up the buttons
         builder.setPositiveButton(getString(R.string.save)) { _, _ ->
-            run { saveWav(view.input?.text.toString().toLowerCase() + getString(R.string.wav_ext)) }
+            run {
+                saveWav(view.input?.text.toString() + getString(R.string.wav_ext))
+            }
         }
         builder.setNegativeButton(getString(R.string.cancel)) { dialog, _ -> dialog.cancel() }
 

@@ -13,7 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_sched_recordings.*
 import kotlinx.android.synthetic.main.schedule_recording_dialog.view.*
-import nz.co.olliechick.hivo.Util.Companion.getDateString
+import nz.co.olliechick.hivo.Util.Companion.getFilenameForCurrentRecording
 import nz.co.olliechick.hivo.Util.Companion.usesCustomFilename
 import org.jetbrains.anko.onClick
 import org.jetbrains.anko.textColor
@@ -56,11 +56,11 @@ class SchedRecordingsActivity : AppCompatActivity() {
 
         val builder = AlertDialog.Builder(this)
         view = layoutInflater.inflate(R.layout.schedule_recording_dialog, null)
-        if (!usesCustomFilename(this)) {
+        if (!usesCustomFilename(this)) { // uses a pre-set filename
             view!!.name.visibility = View.GONE
-            schedRecording.filename = getDateString(this)
-            Log.i("FOO", schedRecording.filename)
-        }
+            schedRecording.name = getFilenameForCurrentRecording(this)
+            Log.i("FOO", schedRecording.name)
+        } else view!!.name.visibility = View.VISIBLE
 
         builder.run {
             setView(view)
@@ -84,8 +84,10 @@ class SchedRecordingsActivity : AppCompatActivity() {
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val inputFilename = view?.name?.input?.text?.toString()
-                if (schedRecording.filename == null && (inputFilename == null || inputFilename == ""))
-                    schedRecording.filename = "(no title)"
+                if (schedRecording.name == null) { // uses custom filename
+                    if (inputFilename == null || inputFilename == "") schedRecording.name = "(no title)"
+                    else schedRecording.name = inputFilename
+                }
 
                 if (!schedRecording.hasValidDate()) {
                     val alertDialog = AlertDialog.Builder(this).create()
@@ -93,10 +95,18 @@ class SchedRecordingsActivity : AppCompatActivity() {
                     alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK") { dialog, _ -> dialog.dismiss() }
                     alertDialog.show()
 
+                } else if (schedRecording.filenameExists(this)) { // already a file with that name
+                    val replacementFilename = schedRecording.generateFilename(this)
+                    val alertDialog = AlertDialog.Builder(this).create()
+                    alertDialog.setTitle("There is already a file with the same name in this location")
+                    alertDialog.setMessage("Do you want to save it as $replacementFilename instead?")
+                    alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK") { dialog, _ -> dialog.dismiss() }
+                    alertDialog.show()
+
                 } else {
                     toast("Scheduling...")
 
-                    recordings.add(schedRecording.filename!!)
+                    recordings.add(schedRecording.name!!)
                     list.adapter?.notifyItemInserted(recordings.size - 1)
 
                     schedRecording.schedule(applicationContext)

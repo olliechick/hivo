@@ -116,49 +116,72 @@ class Util {
             }
         }
 
-        fun getPublicDirectory(context: Context): File? = File(
+        /** Returns the directory (external storage)/HiVo recordings */
+        private fun getPublicDirectory(context: Context): File? = File(
             Environment.getExternalStorageDirectory(),
             context.getString(R.string.hivo_recordings)
         ).apply { mkdirs() }
 
-
         private fun getPrivateDirectory(context: Context): File = context.filesDir
+
+        /**
+         * Saves a file to (external storage)/HiVo recordings/(filename).wav
+         */
+        fun saveWav(filename: String, context: Context, sampleRate: Int) {
+            val rawFile = getRawFile(context)
+            val waveFile = File(getPublicDirectory(context), filename)
+            rawToWave(rawFile, waveFile, sampleRate)
+        }
+
+        /** Returns true if (external storage)/HiVo recordings/(filename) exists */
+        fun fileExists(filename: String, context: Context) = File(getPublicDirectory(context), filename).exists()
+
+        /** Returns true if (external storage)/HiVo recordings/(filename).wav exists */
+        fun wavExists(name: String, context: Context) = fileExists("$name.wav", context)
 
         fun getRawFile(context: Context) =
             File(getPrivateDirectory(context), context.getString(R.string.raw_recording_filename))
 
-        fun getDateString(context: Context, format: FilenameFormat, now: Date): String? {
+        /**
+         * Formats the passed in date using the relevant FilenameFormat
+         */
+        fun getDateString(format: FilenameFormat, date: Date): String? {
             val pattern = when (format) {
                 FilenameFormat.READABLE -> "h:mm:ss a, d MMM yyyy"
                 FilenameFormat.SORTABLE -> "yyyy-MM-dd-HH-mm-ss"
                 else -> null
             }
             return if (pattern == null) null
-            else SimpleDateFormat(pattern, Locale.ENGLISH).format(now) + context.getString(R.string.wav_ext)
+            else SimpleDateFormat(pattern, Locale.ENGLISH).format(date)
         }
 
-        fun getDateString(context: Context): String? {
+        /**
+         * Returns a filename based on stored settings for filename format and start time.
+         * If filename format is custom, returns null.
+         */
+        fun getFilenameForCurrentRecording(context: Context): String? {
             val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
             val name = sharedPreferences.getString(filenameKey, null)
-            val now = Date().apply { time = sharedPreferences.getLong(startTimeKey, Date().time) }
+            val date = Date().apply { time = sharedPreferences.getLong(startTimeKey, Date().time) }
 
-            return if (name == null) null // shouldn't happen
-            else getDateString(context, FilenameFormat.valueOf(name), now)
+            val dateString: String?
+            if (name == null) return null
+            else dateString = getDateString(FilenameFormat.valueOf(name), date)
+            return if (dateString == null) dateString + context.getString(R.string.wav_ext)
+            else null
         }
 
         /** Returns maximum record time in minutes */
         fun getMaximumRecordTime(context: Context): Int =
             PreferenceManager.getDefaultSharedPreferences(context).getString(bufferKey, "")?.toInt() ?: defaultBuffer
 
-
-        fun usesCustomFilename(context: Context) = getDateString(context) == null
+        fun usesCustomFilename(context: Context) = getFilenameForCurrentRecording(context) == null
 
         fun saveStartTime(prefs: SharedPreferences) {
             val prefsEditor = prefs.edit()
             prefsEditor.putLong(startTimeKey, Date().time)
             prefsEditor.apply()
         }
-
 
         /**
          * This is just for debug purposes, and should be removed for the delivered product.
