@@ -20,7 +20,6 @@
     <string name="save_recording">Save recording</string>
     <string name="cancel">Cancel</string>
     <string name="enter_a_filename">Enter a filename…</string>
-    <string name="wav_ext" translatable="false">.wav</string>
     <string name="hivo_recordings">HiVo recordings</string>
     <string name="raw_recording_filename" translatable="false">recording.pcm</string>
     <string name="help_url" translatable="false">https://docs.google.com/document/d/1Ayy6e52J_IaNXumw5bOuv1kslXrlIouXY6a_Ba71CyY/edit?usp=sharing</string>

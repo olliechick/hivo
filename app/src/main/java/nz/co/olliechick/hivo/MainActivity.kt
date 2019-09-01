@@ -22,7 +22,8 @@ import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.save_filename_dialog.view.*
 import nz.co.olliechick.hivo.Util.Companion.debugToast
-import nz.co.olliechick.hivo.Util.Companion.getFilenameForCurrentRecording
+import nz.co.olliechick.hivo.Util.Companion.fileExt
+import nz.co.olliechick.hivo.Util.Companion.getNameForCurrentRecording
 import nz.co.olliechick.hivo.Util.Companion.getRawFile
 import nz.co.olliechick.hivo.Util.Companion.saveWav
 import org.jetbrains.anko.doAsync
@@ -68,7 +69,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        checkPermissions(arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+        checkPermissions(
+            arrayOf(
+                Manifest.permission.RECORD_AUDIO,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
+        )
 
         recordingSwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
@@ -91,7 +97,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         saveButton.setOnClickListener {
-            val dateString = getFilenameForCurrentRecording(this)
+            val dateString = getNameForCurrentRecording(this)
             if (dateString == null) promptForFilenameAndSave()
             else saveWav(dateString)
         }
@@ -162,8 +168,10 @@ class MainActivity : AppCompatActivity() {
         val permissionsToGet = arrayListOf<String>()
 
         permissions.forEach { permission ->
-            if (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED)
-                permissionsToGet.add(permission)
+            if (ActivityCompat.checkSelfPermission(
+                    this, permission
+                ) != PackageManager.PERMISSION_GRANTED
+            ) permissionsToGet.add(permission)
         }
 
         return if (permissionsToGet.isEmpty()) true
@@ -212,11 +220,14 @@ class MainActivity : AppCompatActivity() {
                 FileOutputStream(file).use { outStream ->
                     while (recordingInProgress.get()) {
                         val result = recorder!!.read(buffer, BUFFER_SIZE)
-                        amplitude = abs((((buffer[0] and 0xff.toByte()).toInt() shl 8) or buffer[1].toInt()))
+                        amplitude =
+                            abs((((buffer[0] and 0xff.toByte()).toInt() shl 8) or buffer[1].toInt()))
                         seekBar.addAmplitude(amplitude)
                         if (result < 0) {
                             throw RuntimeException(
-                                "Reading of audio buffer failed: " + getBufferReadFailureReason(result)
+                                "Reading of audio buffer failed: " + getBufferReadFailureReason(
+                                    result
+                                )
                             )
                         }
                         outStream.write(buffer.array(), 0, BUFFER_SIZE)
@@ -263,7 +274,11 @@ class MainActivity : AppCompatActivity() {
                     return@doAsync
                 }
 
-                val bufferSize = AudioTrack.getMinBufferSize(SAMPLING_RATE_IN_HZ, CHANNEL_OUT_CONFIG, AUDIO_FORMAT)
+                val bufferSize = AudioTrack.getMinBufferSize(
+                    SAMPLING_RATE_IN_HZ,
+                    CHANNEL_OUT_CONFIG,
+                    AUDIO_FORMAT
+                )
 
                 @Suppress("DEPRECATION")
                 audio = AudioTrack(
@@ -326,9 +341,9 @@ class MainActivity : AppCompatActivity() {
 
     // Saving audio
 
-    private fun saveWav(filename: String) {
+    private fun saveWav(name: String) {
         toast(getString(R.string.saving))
-        saveWav(filename, this, SAMPLING_RATE_IN_HZ)
+        saveWav(name + fileExt, this, SAMPLING_RATE_IN_HZ)
         toast(getString(R.string.saved))
     }
 
@@ -343,7 +358,7 @@ class MainActivity : AppCompatActivity() {
         // Set up the buttons
         builder.setPositiveButton(getString(R.string.save)) { _, _ ->
             run {
-                saveWav(view.input?.text.toString() + getString(R.string.wav_ext))
+                saveWav(view.input?.text.toString())
             }
         }
         builder.setNegativeButton(getString(R.string.cancel)) { dialog, _ -> dialog.cancel() }

@@ -4,7 +4,9 @@ import android.annotation.SuppressLint
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
+import android.text.Html
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
@@ -13,7 +15,8 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_sched_recordings.*
 import kotlinx.android.synthetic.main.schedule_recording_dialog.view.*
-import nz.co.olliechick.hivo.Util.Companion.getFilenameForCurrentRecording
+import nz.co.olliechick.hivo.Util.Companion.getIntersectingRecordings
+import nz.co.olliechick.hivo.Util.Companion.getNameForRecording
 import nz.co.olliechick.hivo.Util.Companion.initialiseDb
 import nz.co.olliechick.hivo.Util.Companion.usesCustomFilename
 import org.jetbrains.anko.*
@@ -48,9 +51,12 @@ class SchedRecordingsActivity : AppCompatActivity() {
         populateList()
 
         fab.onClick {
-            val start = Calendar.getInstance().also {
-                it.add(Calendar.MINUTE, 60)
-                it.set(Calendar.MINUTE, 0)
+            //Start at next full hour eg (2pm, 2:59:59pm) -> 3pm, and finish [max record time] later
+            val start = Calendar.getInstance().apply {
+                add(Calendar.MINUTE, 60)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
             }
             val end = (start.clone() as Calendar).also {
                 it.add(Calendar.MINUTE, Util.getMaximumRecordTime(this))
@@ -106,12 +112,13 @@ class SchedRecordingsActivity : AppCompatActivity() {
     private fun openScheduleRecordingDialog(initialStartDate: Calendar, initialEndDate: Calendar) {
         val builder = AlertDialog.Builder(this)
         view = layoutInflater.inflate(R.layout.schedule_recording_dialog, null)
-        if (!usesCustomFilename(this)) view!!.name.visibility = View.GONE
-        else view!!.name.visibility = View.VISIBLE
+        if (usesCustomFilename(this)) view!!.name.visibility = View.VISIBLE
+        else view!!.name.visibility = View.GONE
 
         startDate = initialStartDate
         endDate = initialEndDate
-        initialiseDateTimes(startDate, endDate)
+        setStartDatetime(startDate)
+        setEndDatetime(endDate)
 
         builder.run {
             setView(view)
@@ -146,11 +153,32 @@ class SchedRecordingsActivity : AppCompatActivity() {
                     val inputName = view?.name?.input?.text?.toString()
                     if (inputName == null || inputName == "") "(no title)"
                     else inputName
-                } else getFilenameForCurrentRecording(this)!!
+                } else getNameForRecording(this, startDate.time)!!
+
+                val existingRecordings = getIntersectingRecordings(recordings, startDate, endDate)
 
                 if (!hasValidDate()) {
                     AlertDialog.Builder(this).create().apply {
                         setMessage("Start time cannot be after the end time.")
+                        setButton(AlertDialog.BUTTON_POSITIVE, "OK") { subDialog, _ ->
+                            subDialog.dismiss()
+                        }
+                        show()
+                    }
+
+                } else if (existingRecordings.isNotEmpty()) {
+                    var message = "There are already ${existingRecordings.size} recordings " +
+                            "scheduled between those two times. Specifically: <ul style=\"list-style:none;\">"
+                    existingRecordings.forEach { message += "<li>${it.toHtml()}</li>" }
+                    message += "</ul>"
+
+                    AlertDialog.Builder(this).create().apply {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                            setMessage(Html.fromHtml(message, Html.FROM_HTML_MODE_COMPACT))
+                        } else {
+                            @Suppress("DEPRECATION")
+                            setMessage(Html.fromHtml(message))
+                        }
                         setButton(AlertDialog.BUTTON_POSITIVE, "OK") { subDialog, _ ->
                             subDialog.dismiss()
                         }
@@ -192,15 +220,6 @@ class SchedRecordingsActivity : AppCompatActivity() {
     private fun recordingNameExists(name: String): Boolean {
         recordings.forEach { if (it.name == name) return true }
         return false
-    }
-
-
-    private fun initialiseDateTimes(startDate: Calendar, endDate: Calendar) {
-        startDate.apply { set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }
-        endDate.apply { set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }
-
-        setStartDatetime(startDate)
-        setEndDatetime(endDate)
     }
 
     /**

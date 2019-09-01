@@ -24,6 +24,7 @@ class Util {
         const val defaultBuffer = 60 //minutes
         const val invalidColour = Color.RED
         const val validColour = Color.BLACK
+        const val fileExt = ".wav"
 
         // adapted from https://stackoverflow.com/a/37436599/8355496
         @Throws(IOException::class)
@@ -138,11 +139,13 @@ class Util {
             File(getPrivateDirectory(context), context.getString(R.string.raw_recording_filename))
 
         /**
-         * Formats the passed in date using the relevant FilenameFormat
+         * Formats the passed in date using the passed in FilenameFormat, and returns it.
+         * If the passed in FilenameFormat is SPECIFY_ON_SAVE (or null), returns null.
          */
         fun getDateString(format: FilenameFormat, date: Date): String? {
             val pattern = when (format) {
                 FilenameFormat.READABLE -> "h:mm:ss a, d MMM yyyy"
+                FilenameFormat.READABLE_SHORT -> "h:mm a, d MMM yyyy"
                 FilenameFormat.SORTABLE -> "yyyy-MM-dd-HH-mm-ss"
                 else -> null
             }
@@ -150,32 +153,67 @@ class Util {
             else SimpleDateFormat(pattern, Locale.ENGLISH).format(date)
         }
 
-        /**
-         * Returns a filename based on stored settings for filename format and start time.
-         * If filename format is custom, returns null.
-         */
-        fun getFilenameForCurrentRecording(context: Context): String? {
-            val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-            val name = sharedPreferences.getString(filenameKey, null)
-            val date = Date().apply { time = sharedPreferences.getLong(startTimeKey, Date().time) }
+        fun getDateString(format: FilenameFormat, date: Calendar): String? {
+            return getDateString(format, date.time)
+        }
 
-            val dateString: String?
-            if (name == null) return null
-            else dateString = getDateString(FilenameFormat.valueOf(name), date)
-            return if (dateString == null) dateString + context.getString(R.string.wav_ext)
-            else null
+        /**
+         * Returns a name based on stored settings for filename format and start time.
+         * If filename format is custom, returns null.
+         * Note that it will not include the .wav extension.
+         * Example return: "2:59:35 PM, 1 Sep 2019"
+         */
+        fun getNameForCurrentRecording(context: Context): String? {
+            val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+            val date = Date().apply { time = sharedPreferences.getLong(startTimeKey, Date().time) }
+            return getNameForRecording(context, date)
+        }
+
+        /**
+         * Returns a name based on stored settings for filename format and the passed-in time.
+         * If filename format is custom, returns null.
+         * Note that it will not include the .wav extension.
+         * Example return: "2:59:35 PM, 1 Sep 2019"
+         */
+        fun getNameForRecording(context: Context, date: Date): String? {
+            val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+            val name = sharedPreferences.getString(filenameKey, null) ?: return null
+
+            return getDateString(FilenameFormat.valueOf(name), date)
         }
 
         /** Returns maximum record time in minutes */
         fun getMaximumRecordTime(context: Context): Int =
-            PreferenceManager.getDefaultSharedPreferences(context).getString(bufferKey, "")?.toInt() ?: defaultBuffer
+            PreferenceManager.getDefaultSharedPreferences(context).getString(
+                bufferKey,
+                null
+            )?.toInt()
+                ?: defaultBuffer
 
-        fun usesCustomFilename(context: Context) = getFilenameForCurrentRecording(context) == null
+        fun usesCustomFilename(context: Context) = getNameForCurrentRecording(context) == null
 
         fun saveStartTime(prefs: SharedPreferences) {
             val prefsEditor = prefs.edit()
             prefsEditor.putLong(startTimeKey, Date().time)
             prefsEditor.apply()
+        }
+
+        /**
+         * Returns a [List] of [Recording]s in [recordings] that will occur between [startDate]
+         * and [endDate].
+         * If there are none, this will be the empty list.
+         */
+        fun getIntersectingRecordings(
+            recordings: List<Recording>,
+            startDate: Calendar,
+            endDate: Calendar
+        ): List<Recording> {
+            val intersectingRecordings: ArrayList<Recording> = arrayListOf()
+            recordings.forEach {
+                // RULE: if it starts before we've ended AND it ends after we start, it intersects
+                if (it.startDate < endDate && it.endDate > startDate) intersectingRecordings.add(it)
+            }
+            return intersectingRecordings
         }
 
         fun initialiseDb(applicationContext: Context): RecordingDatabase {
