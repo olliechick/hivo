@@ -148,8 +148,6 @@ class MainActivity : AppCompatActivity() {
             if (PackageManager.PERMISSION_DENIED in grantResults) {
                 toast("You will have to grant permissions to be able to record.")
                 finishAffinity()
-            } else {
-                startRecording()
             }
         }
     }
