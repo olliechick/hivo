@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 
 class SchedRecordingAdapter(
     private val context: Context,
-    private val schedRecordings: List<String>
+    private val schedRecordings: List<Recording>
 ) : RecyclerView.Adapter<SchedRecordingAdapter.SchedRecordingViewHolder>() {
 
     override fun getItemCount() = schedRecordings.size
@@ -22,7 +22,7 @@ class SchedRecordingAdapter(
     }
 
     override fun onBindViewHolder(holder: SchedRecordingViewHolder, i: Int) {
-        holder.recordingName.text = schedRecordings[i]
+        holder.recordingName.text = schedRecordings[i].name
     }
 
     class SchedRecordingViewHolder(view: View) : RecyclerView.ViewHolder(view) {

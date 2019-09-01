@@ -7,6 +7,7 @@ import android.os.Environment
 import android.view.Gravity
 import android.widget.Toast
 import androidx.preference.PreferenceManager
+import androidx.room.Room
 import java.io.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -133,12 +134,6 @@ class Util {
             rawToWave(rawFile, waveFile, sampleRate)
         }
 
-        /** Returns true if (external storage)/HiVo recordings/(filename) exists */
-        fun fileExists(filename: String, context: Context) = File(getPublicDirectory(context), filename).exists()
-
-        /** Returns true if (external storage)/HiVo recordings/(filename).wav exists */
-        fun wavExists(name: String, context: Context) = fileExists("$name.wav", context)
-
         fun getRawFile(context: Context) =
             File(getPrivateDirectory(context), context.getString(R.string.raw_recording_filename))
 
@@ -181,6 +176,13 @@ class Util {
             val prefsEditor = prefs.edit()
             prefsEditor.putLong(startTimeKey, Date().time)
             prefsEditor.apply()
+        }
+
+        fun initialiseDb(applicationContext: Context): RecordingDatabase {
+            return Room.databaseBuilder(
+                applicationContext,
+                RecordingDatabase::class.java, "db"
+            ).build()
         }
 
         /**

@@ -5,19 +5,18 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_sched_recordings.*
 import kotlinx.android.synthetic.main.schedule_recording_dialog.view.*
 import nz.co.olliechick.hivo.Util.Companion.getFilenameForCurrentRecording
+import nz.co.olliechick.hivo.Util.Companion.initialiseDb
 import nz.co.olliechick.hivo.Util.Companion.usesCustomFilename
-import org.jetbrains.anko.onClick
-import org.jetbrains.anko.textColor
-import org.jetbrains.anko.toast
+import org.jetbrains.anko.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -25,9 +24,15 @@ import java.util.*
 class SchedRecordingsActivity : AppCompatActivity() {
 
     private var view: View? = null
-    private lateinit var schedRecording: SchedRecording
+    private lateinit var db: RecordingDatabase
 
-    var recordings: ArrayList<String> = arrayListOf()
+    // start and end date initialised to the epoch to easily spot bugs, as these should be
+    // set to whatever openScheduleRecordingDialog() is called with before being displayed.
+    private var startDate: Calendar = GregorianCalendar(1970, 0, 1)
+    private var endDate: Calendar = GregorianCalendar(1970, 0, 1)
+
+
+    var recordings: ArrayList<Recording> = arrayListOf()
         set(value) {
             field = value
             list.adapter = SchedRecordingAdapter(this, field)
@@ -40,27 +45,73 @@ class SchedRecordingsActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = getString(R.string.scheduled_recordings)
 
+        populateList()
+
+        fab.onClick {
+            val start = Calendar.getInstance().also {
+                it.add(Calendar.MINUTE, 60)
+                it.set(Calendar.MINUTE, 0)
+            }
+            val end = (start.clone() as Calendar).also {
+                it.add(Calendar.MINUTE, Util.getMaximumRecordTime(this))
+            }
+            openScheduleRecordingDialog(start, end)
+        }
+    }
+
+    private fun populateList() {
         val layoutManager = LinearLayoutManager(this)
         list.layoutManager = layoutManager
         recordings = arrayListOf()
 
-        fab.onClick {
-            openScheduleRecordingDialog(Calendar.getInstance(),
-                Calendar.getInstance().also { it.add(Calendar.MINUTE, Util.getMaximumRecordTime(this)) })
+        doAsync {
+            db = initialiseDb(applicationContext)
+            val allRecordings = db.recordingDao().getAll()
+            uiThread {
+                recordings = ArrayList(allRecordings)
+                if (recordings.size == 0) {
+                    list.visibility = View.GONE
+                    //todo empty_view.visibility = View.VISIBLE
+                }
+            }
+            db.close()
+        }
+
+        val decoration = DividerItemDecoration(this, layoutManager.orientation)
+        list.addItemDecoration(decoration)
+    }
+
+    private fun scheduleRecording(name: String) {
+        toast("Scheduling ${name}...")
+
+        val schedRecording = Recording(name, startDate, endDate)
+        schedRecording.schedule(applicationContext)
+
+        doAsync {
+            db = initialiseDb(applicationContext)
+            db.recordingDao().insert(schedRecording)
+            db.close()
+
+            uiThread {
+                recordings.add(schedRecording)
+                toast("Scheduled ${name}.")
+                list.adapter?.notifyItemInserted(recordings.size - 1)
+                list.visibility = View.VISIBLE
+                //todo empty_view.visibility = View.GONE
+            }
         }
     }
 
     @SuppressLint("InflateParams")
-    private fun openScheduleRecordingDialog(startDate: Calendar, endDate: Calendar) {
-        schedRecording = SchedRecording(startDate, endDate)
-
+    private fun openScheduleRecordingDialog(initialStartDate: Calendar, initialEndDate: Calendar) {
         val builder = AlertDialog.Builder(this)
         view = layoutInflater.inflate(R.layout.schedule_recording_dialog, null)
-        if (!usesCustomFilename(this)) { // uses a pre-set filename
-            view!!.name.visibility = View.GONE
-            schedRecording.name = getFilenameForCurrentRecording(this)
-            Log.i("FOO", schedRecording.name)
-        } else view!!.name.visibility = View.VISIBLE
+        if (!usesCustomFilename(this)) view!!.name.visibility = View.GONE
+        else view!!.name.visibility = View.VISIBLE
+
+        startDate = initialStartDate
+        endDate = initialEndDate
+        initialiseDateTimes(startDate, endDate)
 
         builder.run {
             setView(view)
@@ -69,13 +120,20 @@ class SchedRecordingsActivity : AppCompatActivity() {
             setNegativeButton(getString(R.string.cancel)) { dialog, _ -> dialog.cancel() }
         }
 
-        initialiseDateTimes(startDate, endDate)
-
+        // set up date and time buttons
         view?.run {
-            startDateButton?.onClick { showDatePicker(this@SchedRecordingsActivity, startDate, ::setStartDate) }
-            endDateButton?.onClick { showDatePicker(this@SchedRecordingsActivity, endDate, ::setEndDate) }
-            startTimeButton?.onClick { showTimePicker(this@SchedRecordingsActivity, startDate, ::setStartTime) }
-            endTimeButton?.onClick { showTimePicker(this@SchedRecordingsActivity, endDate, ::setEndTime) }
+            startDateButton?.onClick {
+                showDatePicker(this@SchedRecordingsActivity, startDate, ::setStartDatetime)
+            }
+            endDateButton?.onClick {
+                showDatePicker(this@SchedRecordingsActivity, endDate, ::setEndDatetime)
+            }
+            startTimeButton?.onClick {
+                showTimePicker(this@SchedRecordingsActivity, startDate, ::setStartDatetime)
+            }
+            endTimeButton?.onClick {
+                showTimePicker(this@SchedRecordingsActivity, endDate, ::setEndDatetime)
+            }
         }
 
         val dialog = builder.create()
@@ -83,33 +141,45 @@ class SchedRecordingsActivity : AppCompatActivity() {
         // Override positive button, so that it only dismisses if validation passes
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                val inputFilename = view?.name?.input?.text?.toString()
-                if (schedRecording.name == null) { // uses custom filename
-                    if (inputFilename == null || inputFilename == "") schedRecording.name = "(no title)"
-                    else schedRecording.name = inputFilename
-                }
 
-                if (!schedRecording.hasValidDate()) {
-                    val alertDialog = AlertDialog.Builder(this).create()
-                    alertDialog.setMessage("Start time cannot be after the end time.")
-                    alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK") { dialog, _ -> dialog.dismiss() }
-                    alertDialog.show()
+                val name = if (usesCustomFilename(this)) {
+                    val inputName = view?.name?.input?.text?.toString()
+                    if (inputName == null || inputName == "") "(no title)"
+                    else inputName
+                } else getFilenameForCurrentRecording(this)!!
 
-                } else if (schedRecording.filenameExists(this)) { // already a file with that name
-                    val replacementFilename = schedRecording.generateFilename(this)
-                    val alertDialog = AlertDialog.Builder(this).create()
-                    alertDialog.setTitle("There is already a file with the same name in this location")
-                    alertDialog.setMessage("Do you want to save it as $replacementFilename instead?")
-                    alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK") { dialog, _ -> dialog.dismiss() }
-                    alertDialog.show()
+                if (!hasValidDate()) {
+                    AlertDialog.Builder(this).create().apply {
+                        setMessage("Start time cannot be after the end time.")
+                        setButton(AlertDialog.BUTTON_POSITIVE, "OK") { subDialog, _ ->
+                            subDialog.dismiss()
+                        }
+                        show()
+                    }
+
+                } else if (recordingNameExists(name)) { // already a file with that name
+                    val replacementName = generateUniqueName(name)
+                    if (usesCustomFilename(this)) {
+                        AlertDialog.Builder(this).create().apply {
+                            setTitle("There is already a recording with that name")
+                            setMessage("Do you want to save it as $replacementName instead?")
+                            setButton(AlertDialog.BUTTON_POSITIVE, "Yes") { subDialog, _ ->
+                                subDialog.dismiss()
+                                dialog.dismiss()
+                                scheduleRecording(replacementName)
+                            }
+                            setButton(AlertDialog.BUTTON_NEGATIVE, "No") { subDialog, _ ->
+                                subDialog.dismiss()
+                            }
+                            show()
+                        }
+                    } else { // user doesn't specify name, so just use the replacement name
+                        dialog.dismiss()
+                        scheduleRecording(replacementName)
+                    }
 
                 } else {
-                    toast("Scheduling...")
-
-                    recordings.add(schedRecording.name!!)
-                    list.adapter?.notifyItemInserted(recordings.size - 1)
-
-                    schedRecording.schedule(applicationContext)
+                    scheduleRecording(name)
                     dialog.dismiss()
                 }
             }
@@ -119,29 +189,43 @@ class SchedRecordingsActivity : AppCompatActivity() {
 
     }
 
+    private fun recordingNameExists(name: String): Boolean {
+        recordings.forEach { if (it.name == name) return true }
+        return false
+    }
+
+
     private fun initialiseDateTimes(startDate: Calendar, endDate: Calendar) {
         startDate.apply { set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }
         endDate.apply { set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }
 
-        setStartDate(startDate)
-        setStartTime(startDate)
-        setEndDate(endDate)
-        setEndTime(endDate)
+        setStartDatetime(startDate)
+        setEndDatetime(endDate)
     }
 
     /**
      * Opens a date picker initialised to date.
      * It then calls setDateCallback with the date the user picked.
      */
-    private fun showDatePicker(context: Context, date: Calendar, setDateCallback: (Calendar) -> Unit) {
-        DatePickerDialog(context, DatePickerDialog.OnDateSetListener { _, year, monthOfYear, dayOfMonth ->
-            date.apply {
-                set(Calendar.YEAR, year)
-                set(Calendar.MONTH, monthOfYear)
-                set(Calendar.DAY_OF_MONTH, dayOfMonth)
-            }
-            setDateCallback(date)
-        }, date.get(Calendar.YEAR), date.get(Calendar.MONTH), date.get(Calendar.DATE)).run {
+    private fun showDatePicker(
+        context: Context,
+        date: Calendar,
+        setDateCallback: (Calendar) -> Unit
+    ) {
+        DatePickerDialog(
+            context,
+            DatePickerDialog.OnDateSetListener { _, year, monthOfYear, dayOfMonth ->
+                date.apply {
+                    set(Calendar.YEAR, year)
+                    set(Calendar.MONTH, monthOfYear)
+                    set(Calendar.DAY_OF_MONTH, dayOfMonth)
+                }
+                setDateCallback(date)
+            },
+            date.get(Calendar.YEAR),
+            date.get(Calendar.MONTH),
+            date.get(Calendar.DATE)
+        ).run {
             show()
         }
     }
@@ -150,7 +234,11 @@ class SchedRecordingsActivity : AppCompatActivity() {
      * Opens a time picker initialised to date.
      * It then calls setTimeCallback with the time the user picked.
      */
-    private fun showTimePicker(context: Context, date: Calendar, setTimeCallback: (Calendar) -> Unit) {
+    private fun showTimePicker(
+        context: Context,
+        date: Calendar,
+        setTimeCallback: (Calendar) -> Unit
+    ) {
         TimePickerDialog(context, TimePickerDialog.OnTimeSetListener { _, hourOfDay, minute ->
             date.apply {
                 set(Calendar.HOUR_OF_DAY, hourOfDay)
@@ -170,37 +258,39 @@ class SchedRecordingsActivity : AppCompatActivity() {
         timeButton.text = format.format(time.time)
     }
 
-    private fun setStartDate(date: Calendar) {
+    private fun setStartDatetime(date: Calendar) {
         view?.startDateButton?.run { setDate(date, this) }
-        schedRecording.startDate = date
-        validate()
-    }
-
-    private fun setEndDate(date: Calendar) {
-        view?.endDateButton?.run { setDate(date, this) }
-        schedRecording.endDate = date
-        validate()
-    }
-
-    private fun setStartTime(date: Calendar) {
         view?.startTimeButton?.run { setTime(date, this) }
-        schedRecording.startDate = date
+        startDate = date
         validate()
     }
 
-    private fun setEndTime(date: Calendar) {
+    private fun setEndDatetime(date: Calendar) {
+        view?.endDateButton?.run { setDate(date, this) }
         view?.endTimeButton?.run { setTime(date, this) }
-        schedRecording.endDate = date
+        endDate = date
         validate()
     }
+
+    private fun hasValidDate() = startDate < endDate
 
     private fun validate() {
-        if (!schedRecording.hasValidDate()) {
+        if (!hasValidDate()) {
             view?.startDateButton?.textColor = Util.invalidColour
             view?.startTimeButton?.textColor = Util.invalidColour
         } else {
             view?.startDateButton?.textColor = Util.validColour
             view?.startTimeButton?.textColor = Util.validColour
         }
+    }
+
+    private fun generateUniqueName(name: String): String {
+        var filename = name
+        var i = 2
+        while (recordingNameExists(filename)) {
+            filename = "$name ($i)"
+            i++
+        }
+        return filename
     }
 }
