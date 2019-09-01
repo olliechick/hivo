@@ -4,33 +4,34 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.AudioFormat
-import android.media.AudioManager
-import android.media.AudioRecord
-import android.media.AudioTrack
-import android.media.MediaRecorder
+import android.media.*
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import androidx.core.app.ActivityCompat
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.save_filename_dialog.view.*
-import nz.co.olliechick.hivo.Util.Companion.debugToast
-import nz.co.olliechick.hivo.Util.Companion.fileExt
-import nz.co.olliechick.hivo.Util.Companion.getNameForCurrentRecording
-import nz.co.olliechick.hivo.Util.Companion.getRawFile
-import nz.co.olliechick.hivo.Util.Companion.saveWav
+import nz.co.olliechick.hivo.util.Constants.Companion.fileExt
+import nz.co.olliechick.hivo.util.Constants.Companion.helpUrl
+import nz.co.olliechick.hivo.util.Constants.Companion.debugToast
+import nz.co.olliechick.hivo.util.StringProcessing.Companion.getNameForCurrentRecording
+import nz.co.olliechick.hivo.util.Files.Companion.getRawFile
+import nz.co.olliechick.hivo.util.Files.Companion.saveWav
+import nz.co.olliechick.hivo.util.Preferences.Companion.saveStartTime
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.image
 import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
-import java.io.*
+import java.io.FileInputStream
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.experimental.and
@@ -127,7 +128,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         R.id.help -> {
-            val uri = Uri.parse(getString(R.string.help_url))
+            val uri = Uri.parse(helpUrl)
             val intent = Intent(Intent.ACTION_VIEW, uri)
             startActivity(intent)
             true
@@ -152,7 +153,7 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 402) {
             if (PackageManager.PERMISSION_DENIED in grantResults) {
-                toast("You will have to grant permissions to be able to record.")
+                toast(getString(R.string.you_have_to_grant_permissions))
                 finishAffinity()
             }
         }
@@ -185,7 +186,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startRecording() {
         debugToast(this, "Recording started.")
-        Util.saveStartTime(getDefaultSharedPreferences(this))
+        saveStartTime(getDefaultSharedPreferences(this))
         recorder = AudioRecord(
             MediaRecorder.AudioSource.DEFAULT, SAMPLING_RATE_IN_HZ,
             CHANNEL_IN_CONFIG, AUDIO_FORMAT, BUFFER_SIZE
@@ -225,9 +226,8 @@ class MainActivity : AppCompatActivity() {
                         seekBar.addAmplitude(amplitude)
                         if (result < 0) {
                             throw RuntimeException(
-                                "Reading of audio buffer failed: " + getBufferReadFailureReason(
-                                    result
-                                )
+                                "Reading of audio buffer failed: "
+                                        + getBufferReadFailureReason(result)
                             )
                         }
                         outStream.write(buffer.array(), 0, BUFFER_SIZE)
@@ -268,7 +268,7 @@ class MainActivity : AppCompatActivity() {
                     inputStream = FileInputStream(file)
                 } catch (e: FileNotFoundException) {
                     uiThread {
-                        toast(getString(R.string.no_file_found))
+                        toast(getString(R.string.no_recording_found))
                         // Note that the user should never get here - if they click play, they are already recording
                     }
                     return@doAsync
@@ -349,22 +349,15 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("InflateParams")
     private fun promptForFilenameAndSave() {
-
-        val builder = AlertDialog.Builder(this)
         val view = layoutInflater.inflate(R.layout.save_filename_dialog, null)
-        builder.setView(view)
-        builder.setTitle(getString(R.string.save_recording))
-
-        // Set up the buttons
-        builder.setPositiveButton(getString(R.string.save)) { _, _ ->
-            run {
-                saveWav(view.input?.text.toString())
-            }
+        AlertDialog.Builder(this).apply {
+            setView(view)
+            setTitle(getString(R.string.save_recording))
+            setPositiveButton(getString(R.string.save)) { _, _ -> saveWav(view.input?.text.toString()) }
+            setNegativeButton(getString(R.string.cancel)) { dialog, _ -> dialog.cancel() }
+            create()
+            show()
         }
-        builder.setNegativeButton(getString(R.string.cancel)) { dialog, _ -> dialog.cancel() }
-
-        builder.create()
-        builder.show()
     }
 
     companion object {
@@ -372,7 +365,7 @@ class MainActivity : AppCompatActivity() {
         private const val SAMPLING_RATE_IN_HZ = 44100
         private const val CHANNEL_IN_CONFIG = AudioFormat.CHANNEL_IN_STEREO
         private const val CHANNEL_OUT_CONFIG = AudioFormat.CHANNEL_OUT_STEREO
-        private val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
+        private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
 
         /**
          * Factor by that the minimum buffer size is multiplied. The bigger the factor is the less

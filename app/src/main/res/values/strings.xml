@@ -1,13 +1,16 @@
 <resources>
+    <plurals name="already_n_recordings_scheduled">
+        <item quantity="one">There is already %1$d recording scheduled between those two times. Specifically: </item>
+        <item quantity="other">There are already %1$d recordings scheduled between those two times. Specifically: </item>
+    </plurals>
+
     <string name="app_name" translatable="false">HiVo</string>
-    <string name="no_file_found">No file found…</string>
-    <string name="play_file">Play file</string>
-    <string name="pause_file">Pause file</string>
+    <string name="no_recording_found">No recording found…</string>
     <string name="stop_recording">Stop recording</string>
     <string name="start_recording">Start recording</string>
     <string name="save">Save</string>
     <string name="title_activity_settings">Settings</string>
-    <string name="filename_format">Filename format</string>
+    <string name="recording_name_format">Recording name format</string>
     <string name="settings">Settings</string>
     <string name="scheduled_recordings">Scheduled Recordings</string>
     <string name="past_recordings">Past Recordings</string>
@@ -15,14 +18,11 @@
     <string name="support">Support</string>
     <string name="send_feedback">Send feedback</string>
     <string name="report_issues">Report technical issues or suggest new features</string>
-    <string name="dev_email" translatable="false">hivoapp@gmail.com</string>
     <string name="buffer">Maximum time to record</string>
     <string name="save_recording">Save recording</string>
     <string name="cancel">Cancel</string>
-    <string name="enter_a_filename">Enter a filename…</string>
+    <string name="enter_a_recording_name">Enter a recording name…</string>
     <string name="hivo_recordings">HiVo recordings</string>
-    <string name="raw_recording_filename" translatable="false">recording.pcm</string>
-    <string name="help_url" translatable="false">https://docs.google.com/document/d/1Ayy6e52J_IaNXumw5bOuv1kslXrlIouXY6a_Ba71CyY/edit?usp=sharing</string>
     <string name="error_1">Error 1: Can\'t retrieve filename options.</string>
     <string name="specify_on_save">Specify on save</string>
     <string name="play_pause_button">play/pause button</string>
@@ -30,4 +30,14 @@
     <string name="saved">Saved.</string>
     <string name="schedule">Schedule</string>
     <string name="schedule_recording">Schedule recording</string>
+    <string name="you_have_to_grant_permissions">You will have to grant permissions to be able to record.</string>
+    <string name="scheduling">Scheduling %1$s…</string>
+    <string name="scheduled">Scheduled %1$s.</string>
+    <string name="no_title">(no title)</string>
+    <string name="start_time_not_after_end_time">Start time cannot be after the end time.</string>
+    <string name="ok">OK</string>
+    <string name="already_recording_with_name">There is already a recording with that name</string>
+    <string name="save_as_instead">Do you want to save it as %1$s instead?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 </resources>

@@ -26,7 +26,7 @@
 
     <ListPreference
         app:key="filename"
-        app:title="@string/filename_format"
+        app:title="@string/recording_name_format"
         app:useSimpleSummaryProvider="true" />
 
     <PreferenceCategory

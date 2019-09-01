@@ -1,4 +1,4 @@
-package nz.co.olliechick.hivo
+package nz.co.olliechick.hivo.util
 
 enum class FilenameFormat {
     READABLE,

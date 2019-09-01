@@ -15,10 +15,13 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_sched_recordings.*
 import kotlinx.android.synthetic.main.schedule_recording_dialog.view.*
-import nz.co.olliechick.hivo.Util.Companion.getIntersectingRecordings
-import nz.co.olliechick.hivo.Util.Companion.getNameForRecording
-import nz.co.olliechick.hivo.Util.Companion.initialiseDb
-import nz.co.olliechick.hivo.Util.Companion.usesCustomFilename
+import nz.co.olliechick.hivo.util.Constants.Companion.invalidColour
+import nz.co.olliechick.hivo.util.Constants.Companion.validColour
+import nz.co.olliechick.hivo.util.Preferences.Companion.getMaximumRecordTime
+import nz.co.olliechick.hivo.util.Recordings.Companion.getIntersectingRecordings
+import nz.co.olliechick.hivo.util.StringProcessing.Companion.getNameForRecording
+import nz.co.olliechick.hivo.util.Database.Companion.initialiseDb
+import nz.co.olliechick.hivo.util.StringProcessing.Companion.usesCustomFilename
 import org.jetbrains.anko.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -59,7 +62,7 @@ class SchedRecordingsActivity : AppCompatActivity() {
                 set(Calendar.MILLISECOND, 0)
             }
             val end = (start.clone() as Calendar).also {
-                it.add(Calendar.MINUTE, Util.getMaximumRecordTime(this))
+                it.add(Calendar.MINUTE, getMaximumRecordTime(this))
             }
             openScheduleRecordingDialog(start, end)
         }
@@ -88,7 +91,7 @@ class SchedRecordingsActivity : AppCompatActivity() {
     }
 
     private fun scheduleRecording(name: String) {
-        toast("Scheduling ${name}...")
+        toast(getString(R.string.scheduling, name))
 
         val schedRecording = Recording(name, startDate, endDate)
         schedRecording.schedule(applicationContext)
@@ -100,7 +103,7 @@ class SchedRecordingsActivity : AppCompatActivity() {
 
             uiThread {
                 recordings.add(schedRecording)
-                toast("Scheduled ${name}.")
+                toast(getString(R.string.scheduled, name))
                 list.adapter?.notifyItemInserted(recordings.size - 1)
                 list.visibility = View.VISIBLE
                 //todo empty_view.visibility = View.GONE
@@ -151,54 +154,53 @@ class SchedRecordingsActivity : AppCompatActivity() {
 
                 val name = if (usesCustomFilename(this)) {
                     val inputName = view?.name?.input?.text?.toString()
-                    if (inputName == null || inputName == "") "(no title)"
+                    if (inputName == null || inputName == "") getString(R.string.no_title)
                     else inputName
                 } else getNameForRecording(this, startDate.time)!!
 
                 val existingRecordings = getIntersectingRecordings(recordings, startDate, endDate)
 
                 if (!hasValidDate()) {
-                    AlertDialog.Builder(this).create().apply {
-                        setMessage("Start time cannot be after the end time.")
-                        setButton(AlertDialog.BUTTON_POSITIVE, "OK") { subDialog, _ ->
-                            subDialog.dismiss()
-                        }
+                    AlertDialog.Builder(this).apply {
+                        setMessage(getString(R.string.start_time_not_after_end_time))
+                        setPositiveButton(getString(R.string.ok)) { subDialog, _ -> subDialog.dismiss() }
+                        create()
                         show()
                     }
 
                 } else if (existingRecordings.isNotEmpty()) {
-                    var message = "There are already ${existingRecordings.size} recordings " +
-                            "scheduled between those two times. Specifically: <ul style=\"list-style:none;\">"
+                    val nRecordings = existingRecordings.size
+                    var message = resources.getQuantityString(
+                        R.plurals.already_n_recordings_scheduled, nRecordings, nRecordings
+                    ) + "<ul style =\"list-style:none;\">"
                     existingRecordings.forEach { message += "<li>${it.toHtml()}</li>" }
                     message += "</ul>"
 
-                    AlertDialog.Builder(this).create().apply {
+                    AlertDialog.Builder(this).apply {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                             setMessage(Html.fromHtml(message, Html.FROM_HTML_MODE_COMPACT))
                         } else {
                             @Suppress("DEPRECATION")
                             setMessage(Html.fromHtml(message))
                         }
-                        setButton(AlertDialog.BUTTON_POSITIVE, "OK") { subDialog, _ ->
-                            subDialog.dismiss()
-                        }
+                        setPositiveButton(getString(R.string.ok)) { subDialog, _ -> subDialog.dismiss() }
+                        create()
                         show()
                     }
 
                 } else if (recordingNameExists(name)) { // already a file with that name
                     val replacementName = generateUniqueName(name)
                     if (usesCustomFilename(this)) {
-                        AlertDialog.Builder(this).create().apply {
-                            setTitle("There is already a recording with that name")
-                            setMessage("Do you want to save it as $replacementName instead?")
-                            setButton(AlertDialog.BUTTON_POSITIVE, "Yes") { subDialog, _ ->
+                        AlertDialog.Builder(this).apply {
+                            setTitle(getString(R.string.already_recording_with_name))
+                            setMessage(getString(R.string.save_as_instead, replacementName))
+                            setPositiveButton(getString(R.string.yes)) { subDialog, _ ->
                                 subDialog.dismiss()
                                 dialog.dismiss()
                                 scheduleRecording(replacementName)
                             }
-                            setButton(AlertDialog.BUTTON_NEGATIVE, "No") { subDialog, _ ->
-                                subDialog.dismiss()
-                            }
+                            setNegativeButton(getString(R.string.no)) { subDialog, _ -> subDialog.dismiss() }
+                            create()
                             show()
                         }
                     } else { // user doesn't specify name, so just use the replacement name
@@ -244,9 +246,7 @@ class SchedRecordingsActivity : AppCompatActivity() {
             date.get(Calendar.YEAR),
             date.get(Calendar.MONTH),
             date.get(Calendar.DATE)
-        ).run {
-            show()
-        }
+        ).run { show() }
     }
 
     /**
@@ -295,11 +295,11 @@ class SchedRecordingsActivity : AppCompatActivity() {
 
     private fun validate() {
         if (!hasValidDate()) {
-            view?.startDateButton?.textColor = Util.invalidColour
-            view?.startTimeButton?.textColor = Util.invalidColour
+            view?.startDateButton?.textColor = invalidColour
+            view?.startTimeButton?.textColor = invalidColour
         } else {
-            view?.startDateButton?.textColor = Util.validColour
-            view?.startTimeButton?.textColor = Util.validColour
+            view?.startDateButton?.textColor = validColour
+            view?.startTimeButton?.textColor = validColour
         }
     }
 

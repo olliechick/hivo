@@ -8,6 +8,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import nz.co.olliechick.hivo.util.Constants.Companion.devEmailLink
+import nz.co.olliechick.hivo.util.FilenameFormat
+import nz.co.olliechick.hivo.util.StringProcessing.Companion.getDateString
 import java.util.*
 
 class SettingsActivity : AppCompatActivity() {
@@ -31,7 +34,7 @@ class SettingsActivity : AppCompatActivity() {
         private fun initSettings() {
             findPreference<Preference>("feedback")?.setOnPreferenceClickListener {
                 val intent = Intent(Intent.ACTION_SENDTO)
-                intent.data = Uri.parse("mailto:" + getString(R.string.dev_email))
+                intent.data = Uri.parse(devEmailLink)
                 intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.app_name))
                 startActivity(intent)
                 true
@@ -45,7 +48,7 @@ class SettingsActivity : AppCompatActivity() {
             activity?.applicationContext?.let {
                 arrayListOf<String>().apply {
                     FilenameFormat.values().forEach {
-                        this.add(Util.getDateString(it, now) ?: getString(R.string.specify_on_save))
+                        this.add(getDateString(it, now) ?: getString(R.string.specify_on_save))
                     }
                 }.toArray(entries)
             }

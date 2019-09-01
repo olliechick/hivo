@@ -10,7 +10,7 @@
         android:id="@+id/name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/enter_a_filename">
+        android:hint="@string/enter_a_recording_name">
 
         <androidx.appcompat.widget.AppCompatEditText
             android:id="@+id/input"
