@@ -11,17 +11,17 @@ class Recordings {
          * and [endDate].
          * If there are none, this will be the empty list.
          */
-        fun getIntersectingRecordings(
+        fun getOverlappingRecordings(
             recordings: List<Recording>,
             startDate: Calendar,
             endDate: Calendar
         ): List<Recording> {
-            val intersectingRecordings: ArrayList<Recording> = arrayListOf()
+            val overlappingRecordings: ArrayList<Recording> = arrayListOf()
             recordings.forEach {
-                // RULE: if it starts before we've ended AND it ends after we start, it intersects
-                if (it.startDate < endDate && it.endDate > startDate) intersectingRecordings.add(it)
+                // RULE: if it starts before we've ended AND it ends after we start, it overlaps
+                if (it.startDate < endDate && it.endDate > startDate) overlappingRecordings.add(it)
             }
-            return intersectingRecordings
+            return overlappingRecordings
         }
     }
 }

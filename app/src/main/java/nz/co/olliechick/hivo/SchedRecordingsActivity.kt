@@ -18,7 +18,7 @@ import kotlinx.android.synthetic.main.schedule_recording_dialog.view.*
 import nz.co.olliechick.hivo.util.Constants.Companion.invalidColour
 import nz.co.olliechick.hivo.util.Constants.Companion.validColour
 import nz.co.olliechick.hivo.util.Preferences.Companion.getMaximumRecordTime
-import nz.co.olliechick.hivo.util.Recordings.Companion.getIntersectingRecordings
+import nz.co.olliechick.hivo.util.Recordings.Companion.getOverlappingRecordings
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.getNameForRecording
 import nz.co.olliechick.hivo.util.Database.Companion.initialiseDb
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.usesCustomFilename
@@ -159,9 +159,12 @@ class SchedRecordingsActivity : AppCompatActivity() {
                     else inputName
                 } else getNameForRecording(this, startDate.time)!!
 
-                val existingRecordings = getIntersectingRecordings(recordings, startDate, endDate)
+                val overlappingRecordings = getOverlappingRecordings(recordings, startDate, endDate)
 
-                if (!hasValidDate()) {
+                // Validation
+
+                if (!startsBeforeItEnds()) {
+                    // Check start date is before end date
                     AlertDialog.Builder(this).apply {
                         setMessage(getString(R.string.start_time_not_after_end_time))
                         setPositiveButton(getString(R.string.ok)) { subDialog, _ -> subDialog.dismiss() }
@@ -169,12 +172,13 @@ class SchedRecordingsActivity : AppCompatActivity() {
                         show()
                     }
 
-                } else if (existingRecordings.isNotEmpty()) {
-                    val nRecordings = existingRecordings.size
+                } else if (overlappingRecordings.isNotEmpty()) {
+                    // Check that there are no recordings scheduled for that time
+                    val nRecordings = overlappingRecordings.size
                     var message = resources.getQuantityString(
                         R.plurals.already_n_recordings_scheduled, nRecordings, nRecordings
                     ) + "<ul style =\"list-style:none;\">"
-                    existingRecordings.forEach { message += "<li>${it.toHtml()}</li>" }
+                    overlappingRecordings.forEach { message += "<li>${it.toHtml()}</li>" }
                     message += "</ul>"
 
                     AlertDialog.Builder(this).apply {
@@ -189,7 +193,8 @@ class SchedRecordingsActivity : AppCompatActivity() {
                         show()
                     }
 
-                } else if (recordingNameExists(name)) { // already a file with that name
+                } else if (recordingNameExists(name)) {
+                    // Check that there is no file with that name
                     val replacementName = generateUniqueName(name)
                     if (usesCustomFilename(this)) {
                         AlertDialog.Builder(this).apply {
@@ -209,7 +214,20 @@ class SchedRecordingsActivity : AppCompatActivity() {
                         scheduleRecording(replacementName)
                     }
 
+                } else if (!startsInTheFuture()) {
+                    // Check that it starts in the future
+                    AlertDialog.Builder(this).apply {
+                        setMessage(getString(R.string.recording_must_start_in_future))
+                        setPositiveButton(getString(R.string.ok)) { subDialog, _ ->
+                            subDialog.dismiss()
+                            updateValidationLabels()
+                        }
+                        create()
+                        show()
+                    }
+
                 } else {
+                    // All valid :)
                     scheduleRecording(name)
                     dialog.dismiss()
                 }
@@ -283,30 +301,36 @@ class SchedRecordingsActivity : AppCompatActivity() {
         // increase/decrease as start does, to maintain the duration
         // E.g. if start = 6pm and end = 7pm, if start is updated to 6:05pm, end will be 7:05pm
         // This is what Google Calendar does when you create an event.
-        endDate.add(Calendar.MILLISECOND, (startDate.timeInMillis - prevStartDate.timeInMillis).toInt())
+        endDate.add(
+            Calendar.MILLISECOND,
+            (startDate.timeInMillis - prevStartDate.timeInMillis).toInt()
+        )
         updateEndDatetimeLabels()
 
         view?.startDateButton?.run { setDate(startDate, this) }
         view?.startTimeButton?.run { setTime(startDate, this) }
         prevStartDate = startDate.clone() as Calendar
-        validate()
+        updateValidationLabels()
     }
 
     private fun updateEndDatetimeLabels() {
         view?.endDateButton?.run { setDate(endDate, this) }
         view?.endTimeButton?.run { setTime(endDate, this) }
-        validate()
+        updateValidationLabels()
     }
 
-    private fun hasValidDate() = startDate < endDate
+    private fun startsInTheFuture() = Date() > startDate.time
+    private fun startsBeforeItEnds() = startDate < endDate
 
-    private fun validate() {
-        if (!hasValidDate()) {
-            view?.startDateButton?.textColor = invalidColour
-            view?.startTimeButton?.textColor = invalidColour
-        } else {
+    private fun hasValidDate() = startsBeforeItEnds() && startsInTheFuture()
+
+    private fun updateValidationLabels() {
+        if (hasValidDate()) {
             view?.startDateButton?.textColor = validColour
             view?.startTimeButton?.textColor = validColour
+        } else {
+            view?.startDateButton?.textColor = invalidColour
+            view?.startTimeButton?.textColor = invalidColour
         }
     }
 

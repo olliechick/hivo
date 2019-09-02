@@ -40,4 +40,5 @@
     <string name="save_as_instead">Do you want to save it as %1$s instead?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="recording_must_start_in_future">The recording must start in the future</string>
 </resources>
