@@ -33,10 +33,10 @@ class SchedRecordingsActivity : AppCompatActivity() {
     private lateinit var db: RecordingDatabase
 
     // start and end date initialised to the epoch to easily spot bugs, as these should be
-    // set to whatever openScheduleRecordingDialog() is called with before being displayed.
+    // set to whatever [openScheduleRecordingDialog] is called with before being displayed.
     private var startDate: Calendar = GregorianCalendar(1970, 0, 1)
+    private var prevStartDate: Calendar = GregorianCalendar(1970, 0, 1)
     private var endDate: Calendar = GregorianCalendar(1970, 0, 1)
-
 
     var recordings: ArrayList<Recording> = arrayListOf()
         set(value) {
@@ -119,9 +119,10 @@ class SchedRecordingsActivity : AppCompatActivity() {
         else view!!.name.visibility = View.GONE
 
         startDate = initialStartDate
+        prevStartDate = initialStartDate
         endDate = initialEndDate
-        setStartDatetime(startDate)
-        setEndDatetime(endDate)
+        updateStartDatetimeLabels()
+        updateEndDatetimeLabels()
 
         builder.run {
             setView(view)
@@ -133,16 +134,16 @@ class SchedRecordingsActivity : AppCompatActivity() {
         // set up date and time buttons
         view?.run {
             startDateButton?.onClick {
-                showDatePicker(this@SchedRecordingsActivity, startDate, ::setStartDatetime)
+                showDatePicker(this@SchedRecordingsActivity, startDate, ::updateStartDatetimeLabels)
             }
             endDateButton?.onClick {
-                showDatePicker(this@SchedRecordingsActivity, endDate, ::setEndDatetime)
+                showDatePicker(this@SchedRecordingsActivity, endDate, ::updateEndDatetimeLabels)
             }
             startTimeButton?.onClick {
-                showTimePicker(this@SchedRecordingsActivity, startDate, ::setStartDatetime)
+                showTimePicker(this@SchedRecordingsActivity, startDate, ::updateStartDatetimeLabels)
             }
             endTimeButton?.onClick {
-                showTimePicker(this@SchedRecordingsActivity, endDate, ::setEndDatetime)
+                showTimePicker(this@SchedRecordingsActivity, endDate, ::updateEndDatetimeLabels)
             }
         }
 
@@ -231,7 +232,7 @@ class SchedRecordingsActivity : AppCompatActivity() {
     private fun showDatePicker(
         context: Context,
         date: Calendar,
-        setDateCallback: (Calendar) -> Unit
+        setDateCallback: () -> Unit
     ) {
         DatePickerDialog(
             context,
@@ -241,7 +242,7 @@ class SchedRecordingsActivity : AppCompatActivity() {
                     set(Calendar.MONTH, monthOfYear)
                     set(Calendar.DAY_OF_MONTH, dayOfMonth)
                 }
-                setDateCallback(date)
+                setDateCallback()
             },
             date.get(Calendar.YEAR),
             date.get(Calendar.MONTH),
@@ -256,14 +257,14 @@ class SchedRecordingsActivity : AppCompatActivity() {
     private fun showTimePicker(
         context: Context,
         date: Calendar,
-        setTimeCallback: (Calendar) -> Unit
+        setTimeCallback: () -> Unit
     ) {
         TimePickerDialog(context, TimePickerDialog.OnTimeSetListener { _, hourOfDay, minute ->
             date.apply {
                 set(Calendar.HOUR_OF_DAY, hourOfDay)
                 set(Calendar.MINUTE, minute)
             }
-            setTimeCallback(date)
+            setTimeCallback()
         }, date.get(Calendar.HOUR_OF_DAY), date.get(Calendar.MINUTE), false).show()
     }
 
@@ -277,17 +278,23 @@ class SchedRecordingsActivity : AppCompatActivity() {
         timeButton.text = format.format(time.time)
     }
 
-    private fun setStartDatetime(date: Calendar) {
-        view?.startDateButton?.run { setDate(date, this) }
-        view?.startTimeButton?.run { setTime(date, this) }
-        startDate = date
+    private fun updateStartDatetimeLabels() {
+        // Update end datetime to reflect update in start datetime - the end datetime will
+        // increase/decrease as start does, to maintain the duration
+        // E.g. if start = 6pm and end = 7pm, if start is updated to 6:05pm, end will be 7:05pm
+        // This is what Google Calendar does when you create an event.
+        endDate.add(Calendar.MILLISECOND, (startDate.timeInMillis - prevStartDate.timeInMillis).toInt())
+        updateEndDatetimeLabels()
+
+        view?.startDateButton?.run { setDate(startDate, this) }
+        view?.startTimeButton?.run { setTime(startDate, this) }
+        prevStartDate = startDate.clone() as Calendar
         validate()
     }
 
-    private fun setEndDatetime(date: Calendar) {
-        view?.endDateButton?.run { setDate(date, this) }
-        view?.endTimeButton?.run { setTime(date, this) }
-        endDate = date
+    private fun updateEndDatetimeLabels() {
+        view?.endDateButton?.run { setDate(endDate, this) }
+        view?.endTimeButton?.run { setTime(endDate, this) }
         validate()
     }
 
