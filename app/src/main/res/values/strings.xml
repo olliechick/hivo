@@ -1,7 +1,7 @@
 <resources>
     <plurals name="already_n_recordings_scheduled">
-        <item quantity="one">There is already %1$d recording scheduled between those two times. Specifically: </item>
-        <item quantity="other">There are already %1$d recordings scheduled between those two times. Specifically: </item>
+        <item quantity="one">There is already %1$d recording scheduled during %2$s. Specifically: </item>
+        <item quantity="other">There are already %1$d recordings scheduled during %2$s. Specifically: </item>
     </plurals>
 
     <string name="app_name" translatable="false">HiVo</string>

@@ -21,6 +21,7 @@ import nz.co.olliechick.hivo.util.Preferences.Companion.getMaximumRecordTime
 import nz.co.olliechick.hivo.util.Recordings.Companion.getOverlappingRecordings
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.getNameForRecording
 import nz.co.olliechick.hivo.util.Database.Companion.initialiseDb
+import nz.co.olliechick.hivo.util.StringProcessing.Companion.formatDateRange
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.usesCustomFilename
 import org.jetbrains.anko.*
 import java.text.SimpleDateFormat
@@ -176,7 +177,8 @@ class SchedRecordingsActivity : AppCompatActivity() {
                     // Check that there are no recordings scheduled for that time
                     val nRecordings = overlappingRecordings.size
                     var message = resources.getQuantityString(
-                        R.plurals.already_n_recordings_scheduled, nRecordings, nRecordings
+                        R.plurals.already_n_recordings_scheduled, nRecordings, nRecordings,
+                        formatDateRange(startDate, endDate)
                     ) + "<ul style =\"list-style:none;\">"
                     overlappingRecordings.forEach { message += "<li>${it.toHtml()}</li>" }
                     message += "</ul>"

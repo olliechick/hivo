@@ -31,7 +31,9 @@ class StringProcessing {
          */
         fun getNameForCurrentRecording(context: Context): String? {
             val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-            val date = Date().apply { time = sharedPreferences.getLong(Constants.startTimeKey, Date().time) }
+            val date = Date().apply {
+                time = sharedPreferences.getLong(Constants.startTimeKey, Date().time)
+            }
             return getNameForRecording(context, date)
         }
 
@@ -53,6 +55,39 @@ class StringProcessing {
         }
 
         fun usesCustomFilename(context: Context) = getNameForCurrentRecording(context) == null
+
+        /**
+         * Returns the date range startDate → endDate formatted compactly.
+         * Examples: "2PM → 3PM, 1 Sep", "2PM → 4:10 PM, 1 Sep", "2PM, 1 Sep → 10AM, 2 Sep".
+         */
+        fun formatDateRange(startDate: Calendar, endDate: Calendar): String {
+            val timeFormatMinutes = "h:mm a"
+            val timeFormatNoMinutes = "ha"
+            val datetimeFormatMinutes = "$timeFormatMinutes, d MMM"
+            val datetimeFormatNoMinutes = "$timeFormatNoMinutes, d MMM"
+
+            val sameDay = startDate.get(Calendar.DAY_OF_YEAR) == endDate.get(Calendar.DAY_OF_YEAR)
+                    && startDate.get(Calendar.YEAR) == endDate.get(Calendar.YEAR)
+
+            var timeFormat = timeFormatMinutes
+            var datetimeFormat = datetimeFormatMinutes
+            if (startDate.get(Calendar.MINUTE) == 0) {
+                timeFormat = timeFormatNoMinutes
+                datetimeFormat = datetimeFormatNoMinutes
+            }
+
+            var dateRange =
+                if (sameDay) SimpleDateFormat(timeFormat, Locale.ENGLISH).format(startDate.time)
+                else SimpleDateFormat(datetimeFormat, Locale.ENGLISH).format(startDate.time)
+            dateRange += " → "
+
+            datetimeFormat = if (endDate.get(Calendar.MINUTE) == 0) datetimeFormatNoMinutes
+            else datetimeFormatMinutes
+
+            dateRange += SimpleDateFormat(datetimeFormat, Locale.ENGLISH).format(endDate.time)
+
+            return dateRange
+        }
 
     }
 }
