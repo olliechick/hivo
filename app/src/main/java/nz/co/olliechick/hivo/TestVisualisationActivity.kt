@@ -8,7 +8,7 @@ import android.view.View
 import java.io.IOException
 
 
-class RecordingActivity : Activity() {
+class TestVisualisationActivity : Activity() {
     private var visualizerView: VisualizerView? = null
     private val recorder = MediaRecorder()
     private val handler = Handler()
