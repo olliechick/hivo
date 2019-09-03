@@ -9,6 +9,8 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import nz.co.olliechick.hivo.util.Database
+import org.jetbrains.anko.doAsync
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.set
@@ -62,25 +64,32 @@ class SchedRecordingAdapter(
         }
     }
 
-    fun pendingRemoval(i: Int) {
+    fun pendingRemoval(i: Int, applicationContext: Context) {
         val recording = schedRecordings[i]
         if (!itemsPendingRemoval.contains(recording)) {
             itemsPendingRemoval.add(recording)
             notifyItemChanged(i) // this will redraw row in "undo" state
 
             // let's create, store and post a runnable to remove the item
-            val pendingRemovalRunnable = Runnable { remove(schedRecordings.indexOf(recording)) }
+            val pendingRemovalRunnable =
+                Runnable { remove(schedRecordings.indexOf(recording), applicationContext) }
             handler.postDelayed(pendingRemovalRunnable, PENDING_REMOVAL_TIMEOUT.toLong())
             pendingRunnables[recording] = pendingRemovalRunnable
         }
     }
 
-    fun remove(i: Int) {
+    private fun remove(i: Int, applicationContext: Context) {
         val recording = schedRecordings[i]
         if (itemsPendingRemoval.contains(recording)) itemsPendingRemoval.remove(recording)
         if (schedRecordings.contains(recording)) {
             schedRecordings.removeAt(i)
             notifyItemRemoved(i)
+        }
+        doAsync {
+            Database.initialiseDb(applicationContext).apply {
+                recordingDao().delete(recording)
+                close()
+            }
         }
     }
 

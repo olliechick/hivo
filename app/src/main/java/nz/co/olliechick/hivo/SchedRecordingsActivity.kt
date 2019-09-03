@@ -144,7 +144,7 @@ class SchedRecordingsActivity : AppCompatActivity() {
                 override fun onSwiped(viewHolder: RecyclerView.ViewHolder, swipeDir: Int) {
                     val swipedPosition = viewHolder.adapterPosition
                     val adapter = list.adapter as SchedRecordingAdapter
-                    adapter.pendingRemoval(swipedPosition)
+                    adapter.pendingRemoval(swipedPosition, applicationContext)
                 }
 
                 override fun onChildDraw(
