@@ -414,8 +414,8 @@ class SchedRecordingsActivity : AppCompatActivity() {
         // E.g. if start = 6pm and end = 7pm, if start is updated to 6:05pm, end will be 7:05pm
         // This is what Google Calendar does when you create an event.
         endDate.add(
-            Calendar.MILLISECOND,
-            (startDate.timeInMillis - prevStartDate.timeInMillis).toInt()
+            Calendar.MINUTE,
+            ((startDate.timeInMillis - prevStartDate.timeInMillis) / (1000 * 60)).toInt()
         )
         updateEndDatetimeLabels()
 
