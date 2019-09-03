@@ -431,7 +431,7 @@ class SchedRecordingsActivity : AppCompatActivity() {
         updateValidationLabels()
     }
 
-    private fun startsInTheFuture() = Date() > startDate.time
+    private fun startsInTheFuture() = Date() < startDate.time
     private fun startsBeforeItEnds() = startDate < endDate
 
     private fun hasValidDate() = startsBeforeItEnds() && startsInTheFuture()
