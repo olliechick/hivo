@@ -85,6 +85,7 @@ class SchedRecordingAdapter(
             schedRecordings.removeAt(i)
             notifyItemRemoved(i)
         }
+        recording.cancel(applicationContext)
         doAsync {
             Database.initialiseDb(applicationContext).apply {
                 recordingDao().delete(recording)

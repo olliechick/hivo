@@ -21,13 +21,21 @@ class Recording(
     fun schedule(applicationContext: Context) {
         val alarmManager =
             applicationContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(applicationContext, SchedRecordingReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(applicationContext, 0, intent, 0)
 
-        val intent = Intent(applicationContext, SchedRecordingReceiver::class.java).let {
-            PendingIntent.getBroadcast(applicationContext, 0, it, 0)
-        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) { //for KitKat and above, .set() is inexact
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP, startDate.timeInMillis, intent)
-        } else alarmManager.set(AlarmManager.RTC_WAKEUP, startDate.timeInMillis, intent)
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, startDate.timeInMillis, pendingIntent)
+        } else alarmManager.set(AlarmManager.RTC_WAKEUP, startDate.timeInMillis, pendingIntent)
+    }
+
+    fun cancel(applicationContext: Context) {
+        val alarmManager =
+            applicationContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(applicationContext, SchedRecordingReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(applicationContext, 0, intent, 0)
+
+        alarmManager.cancel(pendingIntent)
     }
 
     private fun getDateRange() = formatDateRange(startDate, endDate)
