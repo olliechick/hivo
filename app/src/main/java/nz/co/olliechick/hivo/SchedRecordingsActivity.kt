@@ -4,6 +4,11 @@ import android.annotation.SuppressLint
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.PorterDuff
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
 import android.text.Html
@@ -11,17 +16,19 @@ import android.view.View
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.activity_sched_recordings.*
 import kotlinx.android.synthetic.main.schedule_recording_dialog.view.*
 import nz.co.olliechick.hivo.util.Constants.Companion.invalidColour
 import nz.co.olliechick.hivo.util.Constants.Companion.validColour
+import nz.co.olliechick.hivo.util.Database.Companion.initialiseDb
 import nz.co.olliechick.hivo.util.Preferences.Companion.getMaximumRecordTime
 import nz.co.olliechick.hivo.util.Recordings.Companion.getOverlappingRecordings
-import nz.co.olliechick.hivo.util.StringProcessing.Companion.getNameForRecording
-import nz.co.olliechick.hivo.util.Database.Companion.initialiseDb
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.formatDateRange
+import nz.co.olliechick.hivo.util.StringProcessing.Companion.getNameForRecording
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.usesCustomFilename
 import org.jetbrains.anko.*
 import java.text.SimpleDateFormat
@@ -53,6 +60,7 @@ class SchedRecordingsActivity : AppCompatActivity() {
         supportActionBar?.title = getString(R.string.scheduled_recordings)
 
         populateList()
+        setUpItemTouchHelper()
 
         fab.onClick {
             //Start at next full hour eg (2pm, 2:59:59pm) -> 3pm, and finish [max record time] later
@@ -72,6 +80,7 @@ class SchedRecordingsActivity : AppCompatActivity() {
     private fun populateList() {
         val layoutManager = LinearLayoutManager(this)
         list.layoutManager = layoutManager
+
         recordings = arrayListOf()
 
         doAsync {
@@ -86,9 +95,113 @@ class SchedRecordingsActivity : AppCompatActivity() {
             }
             db.close()
         }
+    }
 
-        val decoration = DividerItemDecoration(this, layoutManager.orientation)
-        list.addItemDecoration(decoration)
+    /**
+     * Adds "swipe to delete" feature. Adapted from
+     * https://github.com/nemanja-kovacevic/recycler-view-swipe-to-delete
+     */
+    private fun setUpItemTouchHelper() {
+        val simpleItemTouchCallback =
+            object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+
+                // we want to cache these and not allocate anything repeatedly in the onChildDraw method
+                internal lateinit var background: Drawable
+                internal lateinit var xMark: Drawable
+                internal var xMarkMargin: Int = 0
+                internal var initiated: Boolean = false
+
+                private fun init() {
+                    background = ColorDrawable(Color.RED)
+                    xMark = ContextCompat.getDrawable(
+                        this@SchedRecordingsActivity,
+                        R.drawable.ic_clear_24dp
+                    )!!
+                    xMark.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
+                    xMarkMargin =
+                        this@SchedRecordingsActivity.resources
+                            .getDimension(R.dimen.ic_clear_margin).toInt()
+                    initiated = true
+                }
+
+                // not important, we don't want drag & drop
+                override fun onMove(
+                    recyclerView: RecyclerView,
+                    viewHolder: RecyclerView.ViewHolder,
+                    target: RecyclerView.ViewHolder
+                ): Boolean {
+                    return false
+                }
+
+                override fun getSwipeDirs(
+                    recyclerView: RecyclerView,
+                    viewHolder: RecyclerView.ViewHolder
+                ): Int {
+                    val position = viewHolder.adapterPosition
+                    val adapter = recyclerView.adapter as SchedRecordingAdapter
+                    return if (adapter.isPendingRemoval(position)) 0
+                    else super.getSwipeDirs(recyclerView, viewHolder)
+                }
+
+                override fun onSwiped(viewHolder: RecyclerView.ViewHolder, swipeDir: Int) {
+                    val swipedPosition = viewHolder.getAdapterPosition()
+                    val adapter = list.adapter as SchedRecordingAdapter
+                    adapter.pendingRemoval(swipedPosition)
+                }
+
+                override fun onChildDraw(
+                    c: Canvas,
+                    recyclerView: RecyclerView,
+                    viewHolder: RecyclerView.ViewHolder,
+                    dX: Float,
+                    dY: Float,
+                    actionState: Int,
+                    isCurrentlyActive: Boolean
+                ) {
+                    val itemView = viewHolder.itemView
+
+                    // not sure why, but this method get's called for viewholder that are already swiped away
+                    if (viewHolder.adapterPosition == -1) return
+
+                    if (!initiated) init()
+
+
+                    // draw red background
+                    background.setBounds(
+                        itemView.getRight() + dX.toInt(),
+                        itemView.getTop(),
+                        itemView.getRight(),
+                        itemView.getBottom()
+                    )
+                    background.draw(c)
+
+                    // draw x mark
+                    val itemHeight = itemView.getBottom() - itemView.getTop()
+                    val intrinsicWidth = xMark.intrinsicWidth
+                    val intrinsicHeight = xMark.intrinsicWidth
+
+                    val xMarkLeft = itemView.getRight() - xMarkMargin - intrinsicWidth
+                    val xMarkRight = itemView.getRight() - xMarkMargin
+                    val xMarkTop = itemView.getTop() + (itemHeight - intrinsicHeight) / 2
+                    val xMarkBottom = xMarkTop + intrinsicHeight
+                    xMark.setBounds(xMarkLeft, xMarkTop, xMarkRight, xMarkBottom)
+
+                    xMark.draw(c)
+
+                    super.onChildDraw(
+                        c,
+                        recyclerView,
+                        viewHolder,
+                        dX,
+                        dY,
+                        actionState,
+                        isCurrentlyActive
+                    )
+                }
+
+            }
+        val mItemTouchHelper = ItemTouchHelper(simpleItemTouchCallback)
+        mItemTouchHelper.attachToRecyclerView(list)
     }
 
     private fun scheduleRecording(name: String) {

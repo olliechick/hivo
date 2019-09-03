@@ -41,4 +41,5 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="recording_must_start_in_future">The recording must start in the future</string>
+    <string name="button_undo">undo</string>
 </resources>
