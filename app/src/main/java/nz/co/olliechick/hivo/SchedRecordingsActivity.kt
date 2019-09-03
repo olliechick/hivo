@@ -106,10 +106,10 @@ class SchedRecordingsActivity : AppCompatActivity() {
             object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
 
                 // we want to cache these and not allocate anything repeatedly in the onChildDraw method
-                internal lateinit var background: Drawable
-                internal lateinit var xMark: Drawable
-                internal var xMarkMargin: Int = 0
-                internal var initiated: Boolean = false
+                lateinit var background: Drawable
+                lateinit var xMark: Drawable
+                var xMarkMargin: Int = 0
+                var initiated: Boolean = false
 
                 private fun init() {
                     background = ColorDrawable(Color.RED)
@@ -129,9 +129,7 @@ class SchedRecordingsActivity : AppCompatActivity() {
                     recyclerView: RecyclerView,
                     viewHolder: RecyclerView.ViewHolder,
                     target: RecyclerView.ViewHolder
-                ): Boolean {
-                    return false
-                }
+                ): Boolean = false
 
                 override fun getSwipeDirs(
                     recyclerView: RecyclerView,
@@ -144,7 +142,7 @@ class SchedRecordingsActivity : AppCompatActivity() {
                 }
 
                 override fun onSwiped(viewHolder: RecyclerView.ViewHolder, swipeDir: Int) {
-                    val swipedPosition = viewHolder.getAdapterPosition()
+                    val swipedPosition = viewHolder.adapterPosition
                     val adapter = list.adapter as SchedRecordingAdapter
                     adapter.pendingRemoval(swipedPosition)
                 }
@@ -165,13 +163,12 @@ class SchedRecordingsActivity : AppCompatActivity() {
 
                     if (!initiated) init()
 
-
                     // draw red background
                     background.setBounds(
-                        itemView.getRight() + dX.toInt(),
-                        itemView.getTop(),
-                        itemView.getRight(),
-                        itemView.getBottom()
+                        itemView.right + dX.toInt(),
+                        itemView.top,
+                        itemView.right,
+                        itemView.bottom
                     )
                     background.draw(c)
 
@@ -180,9 +177,9 @@ class SchedRecordingsActivity : AppCompatActivity() {
                     val intrinsicWidth = xMark.intrinsicWidth
                     val intrinsicHeight = xMark.intrinsicWidth
 
-                    val xMarkLeft = itemView.getRight() - xMarkMargin - intrinsicWidth
-                    val xMarkRight = itemView.getRight() - xMarkMargin
-                    val xMarkTop = itemView.getTop() + (itemHeight - intrinsicHeight) / 2
+                    val xMarkLeft = itemView.right - xMarkMargin - intrinsicWidth
+                    val xMarkRight = itemView.right - xMarkMargin
+                    val xMarkTop = itemView.top + (itemHeight - intrinsicHeight) / 2
                     val xMarkBottom = xMarkTop + intrinsicHeight
                     xMark.setBounds(xMarkLeft, xMarkTop, xMarkRight, xMarkBottom)
 
