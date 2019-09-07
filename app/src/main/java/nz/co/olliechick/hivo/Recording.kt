@@ -18,11 +18,17 @@ class Recording(
     @ColumnInfo(name = "start_date") var startDate: Calendar,
     @ColumnInfo(name = "end_date") var endDate: Calendar
 ) {
-    fun schedule(applicationContext: Context) {
-        val alarmManager =
-            applicationContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    private fun generatePendingIntent(applicationContext: Context): PendingIntent {
         val intent = Intent(applicationContext, SchedRecordingReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(applicationContext, 0, intent, 0)
+        return PendingIntent.getBroadcast(applicationContext, 0, intent, 0)
+    }
+
+    private fun getAlarmManager(applicationContext: Context) =
+        applicationContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+    fun schedule(applicationContext: Context) {
+        val alarmManager = getAlarmManager(applicationContext)
+        val pendingIntent = generatePendingIntent(applicationContext)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) { //for KitKat and above, .set() is inexact
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, startDate.timeInMillis, pendingIntent)
@@ -30,10 +36,8 @@ class Recording(
     }
 
     fun cancel(applicationContext: Context) {
-        val alarmManager =
-            applicationContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(applicationContext, SchedRecordingReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(applicationContext, 0, intent, 0)
+        val alarmManager = getAlarmManager(applicationContext)
+        val pendingIntent = generatePendingIntent(applicationContext)
 
         alarmManager.cancel(pendingIntent)
     }
