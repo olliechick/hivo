@@ -42,4 +42,7 @@
     <string name="no">No</string>
     <string name="recording_must_start_in_future">The recording must start in the future</string>
     <string name="button_undo">undo</string>
+    <string name="hivo_recording">HiVo Recording</string>
+    <string name="hivo_recording_in_bg">HiVo is recording in the background 🎤</string>
+    <string name="tap_to_open">Tap to open it</string>
 </resources>

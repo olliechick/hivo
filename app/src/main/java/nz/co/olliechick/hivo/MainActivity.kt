@@ -2,9 +2,14 @@ package nz.co.olliechick.hivo
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.media.*
+import android.media.AudioFormat
+import android.media.AudioManager
+import android.media.AudioTrack
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -14,36 +19,27 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.save_filename_dialog.view.*
+import nz.co.olliechick.hivo.util.Constants.Companion.amplitudeKey
+import nz.co.olliechick.hivo.util.Constants.Companion.audioFormat
+import nz.co.olliechick.hivo.util.Constants.Companion.debugToast
 import nz.co.olliechick.hivo.util.Constants.Companion.fileExt
 import nz.co.olliechick.hivo.util.Constants.Companion.helpUrl
-import nz.co.olliechick.hivo.util.Constants.Companion.debugToast
-import nz.co.olliechick.hivo.util.StringProcessing.Companion.getNameForCurrentRecording
+import nz.co.olliechick.hivo.util.Constants.Companion.newAmplitudeIntent
+import nz.co.olliechick.hivo.util.Constants.Companion.samplingRateHz
 import nz.co.olliechick.hivo.util.Files.Companion.getRawFile
 import nz.co.olliechick.hivo.util.Files.Companion.saveWav
-import nz.co.olliechick.hivo.util.Preferences.Companion.saveStartTime
+import nz.co.olliechick.hivo.util.StringProcessing.Companion.getNameForCurrentRecording
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.image
 import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
 import java.io.FileInputStream
 import java.io.FileNotFoundException
-import java.io.FileOutputStream
-import java.io.IOException
-import java.nio.ByteBuffer
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.experimental.and
-import kotlin.math.abs
 
 
 class MainActivity : AppCompatActivity() {
-
-    /**
-     * Signals whether a recording is in progress (true) or not (false).
-     */
-    private val recordingInProgress = AtomicBoolean(false)
 
     private var playbackInProgress = false
         set(value) {
@@ -54,15 +50,17 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-    private var recorder: AudioRecord? = null
-
-    private var recordingThread: Thread? = null
-
     private var audio: AudioTrack? = null
     private var inputStream: FileInputStream? = null
     private var isPaused = false
     private var bytesread = 0
-    private var amplitude = 0
+
+    private val amplitudeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val amplitude = intent.getIntExtra(amplitudeKey, 0)
+            seekBar.addAmplitude(amplitude)
+        }
+    }
 
     // Lifecycle methods
 
@@ -76,6 +74,10 @@ class MainActivity : AppCompatActivity() {
                 Manifest.permission.WRITE_EXTERNAL_STORAGE
             )
         )
+
+        registerReceiver(amplitudeReceiver, IntentFilter(newAmplitudeIntent))
+
+        recordingSwitch.isChecked = RecordingService.isRunning(this)
 
         recordingSwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
@@ -102,6 +104,11 @@ class MainActivity : AppCompatActivity() {
             if (dateString == null) promptForFilenameAndSave()
             else saveWav(dateString)
         }
+    }
+
+    override fun onDestroy() {
+        unregisterReceiver(amplitudeReceiver)
+        super.onDestroy()
     }
 
     // Options menu
@@ -185,69 +192,14 @@ class MainActivity : AppCompatActivity() {
     // Recording audio
 
     private fun startRecording() {
-        debugToast(this, "Recording started.")
-        saveStartTime(getDefaultSharedPreferences(this))
-        recorder = AudioRecord(
-            MediaRecorder.AudioSource.DEFAULT, SAMPLING_RATE_IN_HZ,
-            CHANNEL_IN_CONFIG, AUDIO_FORMAT, BUFFER_SIZE
-        )
-
-        recorder!!.startRecording()
-
-        recordingInProgress.set(true)
-
-        recordingThread = Thread(RecordingRunnable(), "Recording Thread")
-        recordingThread!!.start()
+        intent = Intent(this, RecordingService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent)
+        else startService(intent)
     }
 
     private fun stopRecording() {
-        if (null == recorder) return
-
-        debugToast(this, "Recording stopped.")
-        recordingInProgress.set(false)
-        recorder!!.stop()
-        recorder!!.release()
-        recorder = null
-        recordingThread = null
-    }
-
-    private inner class RecordingRunnable : Runnable {
-
-        override fun run() {
-            val file = getRawFile(this@MainActivity)
-            val buffer = ByteBuffer.allocateDirect(BUFFER_SIZE)
-
-            try {
-                FileOutputStream(file).use { outStream ->
-                    while (recordingInProgress.get()) {
-                        val result = recorder!!.read(buffer, BUFFER_SIZE)
-                        amplitude =
-                            abs((((buffer[0] and 0xff.toByte()).toInt() shl 8) or buffer[1].toInt()))
-                        seekBar.addAmplitude(amplitude)
-                        if (result < 0) {
-                            throw RuntimeException(
-                                "Reading of audio buffer failed: "
-                                        + getBufferReadFailureReason(result)
-                            )
-                        }
-                        outStream.write(buffer.array(), 0, BUFFER_SIZE)
-                        buffer.clear()
-                    }
-                }
-            } catch (e: IOException) {
-                throw RuntimeException("Writing of recorded audio failed", e)
-            }
-        }
-
-        private fun getBufferReadFailureReason(errorCode: Int): String {
-            return when (errorCode) {
-                AudioRecord.ERROR_INVALID_OPERATION -> "ERROR_INVALID_OPERATION"
-                AudioRecord.ERROR_BAD_VALUE -> "ERROR_BAD_VALUE"
-                AudioRecord.ERROR_DEAD_OBJECT -> "ERROR_DEAD_OBJECT"
-                AudioRecord.ERROR -> "ERROR"
-                else -> "Unknown ($errorCode)"
-            }
-        }
+        intent = Intent(this, RecordingService::class.java)
+        stopService(intent)
     }
 
     // Playing audio
@@ -275,17 +227,17 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 val bufferSize = AudioTrack.getMinBufferSize(
-                    SAMPLING_RATE_IN_HZ,
+                    samplingRateHz,
                     CHANNEL_OUT_CONFIG,
-                    AUDIO_FORMAT
+                    audioFormat
                 )
 
                 @Suppress("DEPRECATION")
                 audio = AudioTrack(
                     AudioManager.STREAM_MUSIC,
-                    SAMPLING_RATE_IN_HZ,
+                    samplingRateHz,
                     CHANNEL_OUT_CONFIG,
-                    AUDIO_FORMAT,
+                    audioFormat,
                     bufferSize,
                     AudioTrack.MODE_STREAM
                 )
@@ -343,7 +295,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun saveWav(name: String) {
         toast(getString(R.string.saving))
-        saveWav(name + fileExt, this, SAMPLING_RATE_IN_HZ)
+        saveWav(name + fileExt, this, samplingRateHz)
         toast(getString(R.string.saved))
     }
 
@@ -361,26 +313,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-
-        private const val SAMPLING_RATE_IN_HZ = 44100
-        private const val CHANNEL_IN_CONFIG = AudioFormat.CHANNEL_IN_STEREO
         private const val CHANNEL_OUT_CONFIG = AudioFormat.CHANNEL_OUT_STEREO
-        private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
-
-        /**
-         * Factor by that the minimum buffer size is multiplied. The bigger the factor is the less
-         * likely it is that samples will be dropped, but more memory will be used. The minimum buffer
-         * size is determined by [AudioRecord.getMinBufferSize] and depends on the
-         * recording settings.
-         */
-        private const val BUFFER_SIZE_FACTOR = 2
-
-        /**
-         * Size of the buffer where the audio data is stored by Android
-         */
-        private val BUFFER_SIZE = AudioRecord.getMinBufferSize(
-            SAMPLING_RATE_IN_HZ,
-            CHANNEL_IN_CONFIG, AUDIO_FORMAT
-        ) * BUFFER_SIZE_FACTOR
     }
 }

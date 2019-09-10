@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="nz.co.olliechick.hivo">
 
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.STORAGE" />
@@ -35,6 +36,10 @@
             </intent-filter>
         </activity>
         <activity android:name=".TestVisualisationActivity" />
+
+        <service
+            android:name=".RecordingService"
+            android:process=":hivoRecordingService" />
     </application>
 
 </manifest>
