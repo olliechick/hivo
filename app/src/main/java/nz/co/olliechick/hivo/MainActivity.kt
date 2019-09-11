@@ -13,6 +13,8 @@ import android.os.Bundle
 import android.os.IBinder
 import android.view.Menu
 import android.view.MenuItem
+import android.view.MotionEvent
+import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -104,6 +106,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        playPauseButton.visibility = View.GONE
         playPauseButton.setOnClickListener {
             when {
                 playbackInProgress -> pausePlayback()
@@ -119,6 +122,33 @@ class MainActivity : AppCompatActivity() {
             val dateString = getNameForCurrentRecording(this)
             if (dateString == null) promptForFilenameAndSave()
             else saveWav(dateString)
+        }
+
+        seekBar.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    // Pressed down
+                    toast("action down")
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    // Released
+                    if (event.eventTime - event.downTime > 8000) togglePlayPauseButton()
+                    saveButton.performClick()
+                    true
+                }
+                MotionEvent.ACTION_CANCEL ->
+                    // Released - Dragged finger outside
+                    true
+                else -> false
+            }
+        }
+    }
+
+    private fun togglePlayPauseButton() {
+        playPauseButton.visibility = when (playPauseButton.visibility) {
+            View.GONE -> View.VISIBLE
+            else -> View.GONE
         }
     }
 
