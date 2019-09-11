@@ -128,13 +128,12 @@ class MainActivity : AppCompatActivity() {
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     // Pressed down
-                    toast("action down")
                     true
                 }
                 MotionEvent.ACTION_UP -> {
                     // Released
                     if (event.eventTime - event.downTime > 8000) togglePlayPauseButton()
-                    saveButton.performClick()
+                    seekBar.performClick()
                     true
                 }
                 MotionEvent.ACTION_CANCEL ->
