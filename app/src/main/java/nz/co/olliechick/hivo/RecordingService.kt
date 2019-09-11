@@ -32,7 +32,7 @@ class RecordingService : Service() {
     private var recorder: AudioRecord? = null
     private var recordingThread: Thread? = null
     private val recordingInProgress = AtomicBoolean(false)
-    var amplitudes = arrayListOf<Int>()
+    val amplitudes = arrayListOf<Int>()
     private val myBinder = MyLocalBinder()
 
     override fun onBind(intent: Intent?): IBinder = myBinder
@@ -117,7 +117,7 @@ class RecordingService : Service() {
                 FileOutputStream(file).use { outStream ->
                     while (recordingInProgress.get()) {
                         val result = recorder!!.read(buffer, BUFFER_SIZE)
-                        //amplitudes.add(generateAmplitude(buffer))
+                        amplitudes.add(generateAmplitude(buffer))
                         val intent = Intent(newAmplitudeIntent)
                         intent.putExtra(amplitudeKey, generateAmplitude(buffer))
                         sendBroadcast(intent)

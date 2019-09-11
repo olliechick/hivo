@@ -2,10 +2,7 @@ package nz.co.olliechick.hivo
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioManager
@@ -13,6 +10,7 @@ import android.media.AudioTrack
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AlertDialog
@@ -77,7 +75,25 @@ class MainActivity : AppCompatActivity() {
 
         registerReceiver(amplitudeReceiver, IntentFilter(newAmplitudeIntent))
 
-        recordingSwitch.isChecked = RecordingService.isRunning(this)
+        if (RecordingService.isRunning(this)) {
+
+            var recordingService: RecordingService
+
+            val connection = object : ServiceConnection {
+                override fun onServiceConnected(className: ComponentName, service: IBinder) {
+                    val binder = service as RecordingService.MyLocalBinder
+                    recordingService = binder.service
+                    seekBar.setAmplitudes(recordingService.amplitudes)
+                    unbindService(this)
+                }
+
+                override fun onServiceDisconnected(name: ComponentName?) {}
+            }
+
+            recordingSwitch.isChecked = true
+            intent = Intent(this, RecordingService::class.java)
+            bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        }
 
         recordingSwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {

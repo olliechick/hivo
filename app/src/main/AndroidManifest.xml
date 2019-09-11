@@ -37,9 +37,7 @@
         </activity>
         <activity android:name=".TestVisualisationActivity" />
 
-        <service
-            android:name=".RecordingService"
-            android:process=":hivoRecordingService" />
+        <service android:name=".RecordingService" />
     </application>
 
 </manifest>
