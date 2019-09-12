@@ -33,9 +33,9 @@ import nz.co.olliechick.hivo.util.Files.Companion.saveWav
 import nz.co.olliechick.hivo.util.Recordings.Companion.startRecording
 import nz.co.olliechick.hivo.util.Recordings.Companion.stopRecording
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.getNameForCurrentRecording
+import nz.co.olliechick.hivo.util.Ui.Companion.toast
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.image
-import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
 import java.io.FileInputStream
 import java.io.FileNotFoundException
