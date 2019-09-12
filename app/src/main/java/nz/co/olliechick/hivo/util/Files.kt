@@ -2,6 +2,7 @@ package nz.co.olliechick.hivo.util
 
 import android.content.Context
 import android.os.Environment
+import android.util.Log
 import nz.co.olliechick.hivo.R
 import java.io.*
 import java.nio.ByteBuffer
@@ -30,48 +31,23 @@ class Files {
                 // WAVE header
                 // see http://ccrma.stanford.edu/courses/422/projects/WaveFormat/
                 writeString(output, "RIFF") // chunk id
-                writeInt(
-                    output,
-                    36 + rawData.size
-                ) // chunk size
+                writeInt(output, 36 + rawData.size) // chunk size
                 writeString(output, "WAVE") // format
-                writeString(
-                    output,
-                    "fmt "
-                ) // subchunk 1 id
+                writeString(output, "fmt ") // subchunk 1 id
                 writeInt(output, 16) // subchunk 1 size
-                writeShort(
-                    output,
-                    1.toShort()
-                ) // audio format (1 = PCM)
-                writeShort(
-                    output,
-                    1.toShort()
-                ) // number of channels
-                writeInt(
-                    output,
-                    sampleRate * 2
-                ) // sample rate
+                writeShort(output, 1.toShort()) // audio format (1 = PCM)
+                writeShort(output, 1.toShort()) // number of channels
+                writeInt(output, sampleRate * 2) // sample rate
                 writeInt(output, sampleRate) // byte rate
-                writeShort(
-                    output,
-                    2.toShort()
-                ) // block align
-                writeShort(
-                    output,
-                    16.toShort()
-                ) // bits per sample
-                writeString(
-                    output,
-                    "data"
-                ) // subchunk 2 id
-                writeInt(
-                    output,
-                    rawData.size
-                ) // subchunk 2 size
+                writeShort(output, 2.toShort()) // block align
+                writeShort(output, 16.toShort()) // bits per sample
+                writeString(output, "data") // subchunk 2 id
+                writeInt(output, rawData.size) // subchunk 2 size
+
                 // Audio data (conversion big endian -> little endian)
                 val shorts = ShortArray(rawData.size / 2)
                 ByteBuffer.wrap(rawData).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shorts)
+                Log.i("hivo", "shorts.size = ${shorts.size}b ~= ${shorts.size / (1000*1000)}Mb")
                 val bytes = ByteBuffer.allocate(shorts.size * 2)
                 for (s in shorts) {
                     bytes.putShort(s)
