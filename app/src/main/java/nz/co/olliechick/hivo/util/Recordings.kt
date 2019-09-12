@@ -1,6 +1,10 @@
 package nz.co.olliechick.hivo.util
 
+import android.content.Context
+import android.content.Intent
+import android.os.Build
 import nz.co.olliechick.hivo.Recording
+import nz.co.olliechick.hivo.RecordingService
 import java.util.*
 
 class Recordings {
@@ -22,6 +26,18 @@ class Recordings {
                 if (it.startDate < endDate && it.endDate > startDate) overlappingRecordings.add(it)
             }
             return overlappingRecordings
+        }
+
+        fun startRecording(context: Context) {
+            val intent = Intent(context, RecordingService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else context.startService(intent)
+        }
+
+        fun stopRecording(context: Context) {
+            val intent = Intent(context, RecordingService::class.java)
+            context.stopService(intent)
         }
     }
 }

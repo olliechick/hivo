@@ -30,6 +30,8 @@ import nz.co.olliechick.hivo.util.Constants.Companion.newAmplitudeIntent
 import nz.co.olliechick.hivo.util.Constants.Companion.samplingRateHz
 import nz.co.olliechick.hivo.util.Files.Companion.getRawFile
 import nz.co.olliechick.hivo.util.Files.Companion.saveWav
+import nz.co.olliechick.hivo.util.Recordings.Companion.startRecording
+import nz.co.olliechick.hivo.util.Recordings.Companion.stopRecording
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.getNameForCurrentRecording
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.image
@@ -99,9 +101,9 @@ class MainActivity : AppCompatActivity() {
 
         recordingSwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
-                startRecording()
+                startRecording(this)
             } else {
-                stopRecording()
+                stopRecording(this)
                 stopPlayback()
             }
         }
@@ -232,19 +234,6 @@ class MainActivity : AppCompatActivity() {
             ActivityCompat.requestPermissions(this, permissionsToGet.toTypedArray(), 402)
             false
         }
-    }
-
-    // Recording audio
-
-    private fun startRecording() {
-        intent = Intent(this, RecordingService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent)
-        else startService(intent)
-    }
-
-    private fun stopRecording() {
-        intent = Intent(this, RecordingService::class.java)
-        stopService(intent)
     }
 
     // Playing audio
