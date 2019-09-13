@@ -38,6 +38,8 @@
         </activity>
         <activity android:name=".TestVisualisationActivity" />
 
+        <receiver android:name=".SchedRecordingReceiver"/>
+
         <service android:name=".RecordingService" />
     </application>
 
