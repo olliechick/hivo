@@ -208,17 +208,19 @@ class SchedRecordingsActivity : AppCompatActivity() {
     private fun scheduleRecording(name: String) {
         toast(getString(R.string.scheduling, name))
 
-        val schedRecording = Recording(name, startDate, endDate)
-        schedRecording.schedule(applicationContext)
-
         doAsync {
+            val schedRecording = Recording(name, startDate, endDate)
+
             db = initialiseDb(applicationContext)
-            db.recordingDao().insert(schedRecording)
+            schedRecording.id = db.recordingDao().insert(schedRecording)
             db.close()
 
+            schedRecording.schedule(applicationContext)
+            recordings.add(schedRecording)
+
             uiThread {
-                recordings.add(schedRecording)
                 toast(getString(R.string.scheduled, name))
+
                 list.adapter?.notifyItemInserted(recordings.size - 1)
                 list.visibility = View.VISIBLE
                 //todo empty_view.visibility = View.GONE

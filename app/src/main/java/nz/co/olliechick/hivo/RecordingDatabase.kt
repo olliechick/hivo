@@ -6,7 +6,7 @@ import java.util.*
 @Dao
 interface RecordingDao {
     @Insert
-    fun insert(recording: Recording)
+    fun insert(recording: Recording): Long
 
     @Update
     fun update(recording: Recording)
