@@ -35,6 +35,8 @@ class Constants {
         const val helpUrl = "https://docs.google.com/document/d/1Ayy6e52J_IaNXumw5bOuv1kslXrlIouXY6a_Ba71CyY"
         const val devEmailLink = "mailto:hivoapp@gmail.com"
 
+        // Special numbers
+        const val unsignedIntMaxValue = 4294967295 // 2^32 - 1
 
         /**
          * This is just for debug purposes, and should be removed for the delivered product. todo

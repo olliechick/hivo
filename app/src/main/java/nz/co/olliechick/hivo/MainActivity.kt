@@ -24,7 +24,6 @@ import kotlinx.android.synthetic.main.save_filename_dialog.view.*
 import nz.co.olliechick.hivo.util.Constants.Companion.amplitudeKey
 import nz.co.olliechick.hivo.util.Constants.Companion.audioFormat
 import nz.co.olliechick.hivo.util.Constants.Companion.debugToast
-import nz.co.olliechick.hivo.util.Constants.Companion.fileExt
 import nz.co.olliechick.hivo.util.Constants.Companion.helpUrl
 import nz.co.olliechick.hivo.util.Constants.Companion.newAmplitudeIntent
 import nz.co.olliechick.hivo.util.Constants.Companion.samplingRateHz
@@ -330,8 +329,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun saveWav(name: String) {
         toast(getString(R.string.saving))
-        saveWav(name, this)
-        toast(getString(R.string.saved))
+        val saveSuccessful = saveWav(name, this)
+        if (saveSuccessful) toast(getString(R.string.saved)) //todo include name
+        else toast(getString(R.string.saving_failed))
     }
 
     @SuppressLint("InflateParams")

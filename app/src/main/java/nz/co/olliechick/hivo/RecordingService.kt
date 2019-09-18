@@ -15,13 +15,19 @@ import androidx.preference.PreferenceManager
 import nz.co.olliechick.hivo.util.Constants
 import nz.co.olliechick.hivo.util.Constants.Companion.amplitudeKey
 import nz.co.olliechick.hivo.util.Constants.Companion.audioFormat
+import nz.co.olliechick.hivo.util.Constants.Companion.bitsPerSample
 import nz.co.olliechick.hivo.util.Constants.Companion.newAmplitudeIntent
+import nz.co.olliechick.hivo.util.Constants.Companion.numChannels
 import nz.co.olliechick.hivo.util.Constants.Companion.samplingRateHz
+import nz.co.olliechick.hivo.util.Constants.Companion.unsignedIntMaxValue
 import nz.co.olliechick.hivo.util.Files
 import nz.co.olliechick.hivo.util.Preferences
+import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.RandomAccessFile
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.experimental.and
 import kotlin.math.abs
@@ -79,8 +85,7 @@ class RecordingService : Service() {
         Constants.debugToast(this, "Recording started.")
         Preferences.saveStartTime(PreferenceManager.getDefaultSharedPreferences(this))
         recorder = AudioRecord(
-            MediaRecorder.AudioSource.DEFAULT, samplingRateHz,
-            CHANNEL_IN_CONFIG, audioFormat, BUFFER_SIZE
+            MediaRecorder.AudioSource.DEFAULT, samplingRateHz, CHANNEL_IN_CONFIG, audioFormat, BUFFER_SIZE
         )
 
         recorder!!.startRecording()
@@ -112,29 +117,56 @@ class RecordingService : Service() {
         override fun run() {
             val file = Files.getRawFile(this@RecordingService)
             val buffer = ByteBuffer.allocateDirect(BUFFER_SIZE)
+            var totalBytesWritten = 0L
+            var outStream: FileOutputStream? = null
 
             try {
-                FileOutputStream(file).use { outStream ->
-                    while (recordingInProgress.get()) {
-                        val result = recorder!!.read(buffer, BUFFER_SIZE)
-                        amplitudes.add(generateAmplitude(buffer))
-                        val intent = Intent(newAmplitudeIntent)
-                        intent.putExtra(amplitudeKey, generateAmplitude(buffer))
-                        sendBroadcast(intent)
+                outStream = FileOutputStream(file)
+                writeHeaders(outStream)
 
-                        if (result < 0) {
-                            throw RuntimeException(
-                                "Reading of audio buffer failed: "
-                                        + getBufferReadFailureReason(result)
-                            )
+                while (recordingInProgress.get()) {
+                    val numBytesRead = recorder?.read(buffer, BUFFER_SIZE) // Read audio to buffer
+
+                    if (numBytesRead != null) totalBytesWritten += numBytesRead
+                    else throw IOException("recorder: AudioRecord is null")
+
+                    // Save and send amplitude
+                    val amplitude = generateAmplitude(buffer)
+                    amplitudes.add(amplitude)
+                    val intent = Intent(newAmplitudeIntent)
+                    intent.putExtra(amplitudeKey, amplitude)
+                    sendBroadcast(intent)
+
+                    if (numBytesRead < 0) throw RuntimeException(
+                        "Reading of audio buffer failed: " + getBufferReadFailureReason(numBytesRead)
+                    )
+
+                    if (totalBytesWritten + numBytesRead <= unsignedIntMaxValue) {
+                        outStream.write(buffer.array(), 0, BUFFER_SIZE) // Write buffer to file
+                    } else {
+                        // Write out as much of the buffer as will "fit", byte by byte
+                        var i = 0
+                        while (totalBytesWritten + i < unsignedIntMaxValue) {
+                            outStream.write(buffer[i].toInt())
+                            i++
                         }
-                        outStream.write(buffer.array(), 0, BUFFER_SIZE)
-                        buffer.clear()
+                        totalBytesWritten = unsignedIntMaxValue
+                        recordingInProgress.set(false)
                     }
+
+                    buffer.clear()
                 }
+
             } catch (e: IOException) {
                 throw RuntimeException("Writing of recorded audio failed", e)
+
+            } finally {
+                if (recorder?.recordingState == AudioRecord.RECORDSTATE_RECORDING) recorder?.stop()
+                if (recorder?.state == AudioRecord.STATE_INITIALIZED) recorder?.release()
+                outStream?.close()
             }
+
+            updateHeaders(file)
         }
 
         private fun generateAmplitude(buffer: ByteBuffer) =
@@ -148,6 +180,53 @@ class RecordingService : Service() {
                 AudioRecord.ERROR -> "ERROR"
                 else -> "Unknown ($errorCode)"
             }
+        }
+    }
+
+    private fun writeHeaders(output: FileOutputStream) {
+        // see https://web.archive.org/web/20141213140451/https://ccrma.stanford.edu/courses/422/projects/WaveFormat/
+        Files.writeString(output, "RIFF") // chunk id
+        Files.writeInt(output, 0) // chunk size - we need to update this later to rawData.size + 36
+        Files.writeString(output, "WAVE") // format
+        Files.writeString(output, "fmt ") // subchunk 1 id
+        Files.writeInt(output, 16) // subchunk 1 size
+        Files.writeShort(output, 1.toShort()) // audio format (1 = PCM)
+        Files.writeShort(output, numChannels.toShort()) // number of channels
+        Files.writeInt(output, samplingRateHz) // sample rate
+        Files.writeInt(output, samplingRateHz * numChannels * bitsPerSample / 8) // byte rate
+        Files.writeShort(output, (numChannels * bitsPerSample / 8).toShort()) // block align
+        Files.writeShort(output, bitsPerSample.toShort()) // bits per sample
+        Files.writeString(output, "data") // subchunk 2 id
+        Files.writeInt(output, 0) // subchunk 2 size - we need to update this later to rawData.size
+    }
+
+    private fun updateHeaders(file: File) {
+        // Create a byte buffer [chunksize1 chunksize2 ... chunksize8 subchunk2size1 subchunk2size2 ...  subchunk2size8]
+        // Note that we're only interested in the first four bytes of each size (as that is how many bytes the RIFF
+        // can hold) - these are stored as longs rather than ints so that we have more space (as they are signed,
+        // int can only hold up to 2^31 - 1, but with four bytes you can store up to 2^32 - 1).
+        val sizes = ByteBuffer
+            .allocate(16)
+            .order(ByteOrder.LITTLE_ENDIAN)
+            .putLong(file.length() - 8) // chunk size
+            .putLong(file.length() - 44) // subchunk 2 size
+            .array()
+
+        var accessWave: RandomAccessFile? = null
+
+        try {
+            accessWave = RandomAccessFile(file, "rw")
+            // chunk size
+            accessWave.seek(4)
+            accessWave.write(sizes, 0, 4)
+
+            // subchunk 2 size
+            accessWave.seek(40)
+            accessWave.write(sizes, 8, 4)
+        } catch (e: IOException) {
+            throw e
+        } finally {
+            accessWave?.close()
         }
     }
 
