@@ -126,6 +126,7 @@ class MainActivity : AppCompatActivity() {
             else saveWav(dateString)
         }
 
+        // Make the play button appear/disappear when you hold down on the visualisation for 8 seconds
         seekBar.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
@@ -236,7 +237,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Playing audio
+    // Playing audio (hidden behind feature flag)
 
     /**
      * Adapted from https://jongladwin.blogspot.com/2010/03/android-play-pcmwav-audio-buffer-using.html
@@ -329,7 +330,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun saveWav(name: String) {
         toast(getString(R.string.saving))
-        saveWav(name + fileExt, this, samplingRateHz)
+        saveWav(name, this)
         toast(getString(R.string.saved))
     }
 

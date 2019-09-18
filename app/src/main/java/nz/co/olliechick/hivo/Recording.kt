@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import nz.co.olliechick.hivo.util.Constants.Companion.nameKey
 import nz.co.olliechick.hivo.util.Constants.Companion.startsKey
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.formatDateRange
 import nz.co.olliechick.hivo.util.toInt
@@ -25,8 +26,8 @@ class Recording(
     private fun generatePendingIntent(applicationContext: Context, starts: Boolean): PendingIntent {
         val intent = Intent(applicationContext, SchedRecordingReceiver::class.java)
         intent.putExtra(startsKey, starts)
+        intent.putExtra(nameKey, name)
         val requestCode = id.toInt() * 2 + starts.toInt() // This has to be unique for each pending intent
-        Log.i("hivo", "Creating pending intent for '$name' with req code $requestCode.")
         return PendingIntent.getBroadcast(applicationContext, requestCode, intent, 0)
     }
 

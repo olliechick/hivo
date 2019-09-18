@@ -15,6 +15,7 @@ class Constants {
         const val newAmplitudeIntent = "new_amplitude"
         const val amplitudeKey = "amplitude"
         const val startsKey = "start"
+        const val nameKey = "name"
 
         // Default values
         const val defaultBuffer = 60 //minutes

@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.Environment
 import android.util.Log
 import nz.co.olliechick.hivo.R
+import nz.co.olliechick.hivo.util.Constants.Companion.fileExt
+import nz.co.olliechick.hivo.util.Constants.Companion.samplingRateHz
 import java.io.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -119,10 +121,10 @@ class Files {
         /**
          * Saves a file to (external storage)/HiVo recordings/[filename].wav
          */
-        fun saveWav(filename: String, context: Context, sampleRate: Int) {
+        fun saveWav(filename: String, context: Context) {
             val rawFile = getRawFile(context)
-            val waveFile = File(getPublicDirectory(context), filename)
-            rawToWave(rawFile, waveFile, sampleRate)
+            val waveFile = File(getPublicDirectory(context), filename + fileExt)
+            rawToWave(rawFile, waveFile, samplingRateHz)
         }
 
         fun getRawFile(context: Context) = File(getPrivateDirectory(context), "recording.pcm")
