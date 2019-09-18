@@ -22,6 +22,8 @@ class Constants {
 
         // Audio
         const val samplingRateHz = 44100
+        const val numChannels = 2
+        const val bitsPerSample = 16
         const val audioFormat = AudioFormat.ENCODING_PCM_16BIT
         const val fileExt = ".wav"
 
@@ -30,8 +32,7 @@ class Constants {
         const val validColour = Color.BLACK
 
         // Links
-        const val helpUrl =
-            "https://docs.google.com/document/d/1Ayy6e52J_IaNXumw5bOuv1kslXrlIouXY6a_Ba71CyY"
+        const val helpUrl = "https://docs.google.com/document/d/1Ayy6e52J_IaNXumw5bOuv1kslXrlIouXY6a_Ba71CyY"
         const val devEmailLink = "mailto:hivoapp@gmail.com"
 
 

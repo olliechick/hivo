@@ -90,6 +90,6 @@ class VisualizerView(context: Context, attrs: AttributeSet) : View(context, attr
     }
 
     companion object {
-        private val MAX_AMPLITUDE = 32767
+        private const val MAX_AMPLITUDE = Short.MAX_VALUE
     }
 }
