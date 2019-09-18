@@ -13,6 +13,8 @@ class Constants {
         const val filenameKey = "filename" //also defined in root_preferences.xml
         const val bufferKey = "buffer"
         const val newAmplitudeIntent = "new_amplitude"
+        const val recordingStartedIntent = "recording_started"
+        const val recordingStoppedIntent = "recording_stopped"
         const val amplitudeKey = "amplitude"
         const val startsKey = "start"
         const val nameKey = "name"

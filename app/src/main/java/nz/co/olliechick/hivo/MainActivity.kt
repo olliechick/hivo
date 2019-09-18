@@ -26,6 +26,8 @@ import nz.co.olliechick.hivo.util.Constants.Companion.audioFormat
 import nz.co.olliechick.hivo.util.Constants.Companion.debugToast
 import nz.co.olliechick.hivo.util.Constants.Companion.helpUrl
 import nz.co.olliechick.hivo.util.Constants.Companion.newAmplitudeIntent
+import nz.co.olliechick.hivo.util.Constants.Companion.recordingStartedIntent
+import nz.co.olliechick.hivo.util.Constants.Companion.recordingStoppedIntent
 import nz.co.olliechick.hivo.util.Constants.Companion.samplingRateHz
 import nz.co.olliechick.hivo.util.Files.Companion.getRawFile
 import nz.co.olliechick.hivo.util.Files.Companion.saveWav
@@ -63,6 +65,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val recordingToggledReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == recordingStartedIntent) recordingSwitch.isChecked = true
+            else if (intent?.action == recordingStoppedIntent) recordingSwitch.isChecked = false
+        }
+    }
+
     // Lifecycle methods
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,6 +86,8 @@ class MainActivity : AppCompatActivity() {
         )
 
         registerReceiver(amplitudeReceiver, IntentFilter(newAmplitudeIntent))
+        registerReceiver(recordingToggledReceiver, IntentFilter(recordingStartedIntent))
+        registerReceiver(recordingToggledReceiver, IntentFilter(recordingStoppedIntent))
 
         if (RecordingService.isRunning(this)) {
 
@@ -98,13 +109,17 @@ class MainActivity : AppCompatActivity() {
             bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
 
-        recordingSwitch.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                startRecording(this)
-            } else {
-                stopRecording(this)
-                stopPlayback()
+        recordingSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (buttonView.isPressed) {
+                if (isChecked) {
+                    startRecording(this)
+                } else {
+                    stopRecording(this)
+                    stopPlayback()
+                }
             }
+            // if it's not pressed, then a scheduled recording starting or stopping triggered it to flip, so we don't
+            // need to start or stop the recording - this was already done by the thing that triggered it!
         }
 
         playPauseButton.visibility = View.GONE

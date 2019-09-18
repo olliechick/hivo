@@ -18,10 +18,13 @@ import nz.co.olliechick.hivo.util.Constants.Companion.audioFormat
 import nz.co.olliechick.hivo.util.Constants.Companion.bitsPerSample
 import nz.co.olliechick.hivo.util.Constants.Companion.newAmplitudeIntent
 import nz.co.olliechick.hivo.util.Constants.Companion.numChannels
+import nz.co.olliechick.hivo.util.Constants.Companion.recordingStartedIntent
+import nz.co.olliechick.hivo.util.Constants.Companion.recordingStoppedIntent
 import nz.co.olliechick.hivo.util.Constants.Companion.samplingRateHz
 import nz.co.olliechick.hivo.util.Constants.Companion.unsignedIntMaxValue
 import nz.co.olliechick.hivo.util.Files
 import nz.co.olliechick.hivo.util.Preferences
+import nz.co.olliechick.hivo.util.Ui.Companion.toast
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -82,29 +85,31 @@ class RecordingService : Service() {
     }
 
     private fun startRecording() {
-        Constants.debugToast(this, "Recording started.")
+        toast("Recording started.")
+        val intent = Intent(recordingStartedIntent)
+        sendBroadcast(intent)
+
         Preferences.saveStartTime(PreferenceManager.getDefaultSharedPreferences(this))
+
         recorder = AudioRecord(
             MediaRecorder.AudioSource.DEFAULT, samplingRateHz, CHANNEL_IN_CONFIG, audioFormat, BUFFER_SIZE
         )
-
-        recorder!!.startRecording()
+        recorder?.startRecording()
 
         recordingInProgress.set(true)
-
         recordingThread = Thread(RecordingRunnable(), "Recording Thread")
         recordingThread!!.start()
     }
 
     private fun stopRecording() {
-        if (recorder == null) return
+        toast("Recording stopped.")
+        val intent = Intent(recordingStoppedIntent)
+        sendBroadcast(intent)
 
-        Constants.debugToast(this, "Recording stopped.")
         recordingInProgress.set(false)
-        recorder!!.stop()
-        recorder!!.release()
+        recorder?.stop()
+        recorder?.release()
         recorder = null
-        recordingThread = null
     }
 
     inner class MyLocalBinder : Binder() {
@@ -250,6 +255,9 @@ class RecordingService : Service() {
             CHANNEL_IN_CONFIG, audioFormat
         ) * BUFFER_SIZE_FACTOR
 
+        /**
+         * @return true if the service is currently running
+         */
         fun isRunning(context: Context): Boolean {
             var serviceRunning = false
             val activityManager =
