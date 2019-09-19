@@ -1,15 +1,14 @@
 package nz.co.olliechick.hivo
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import kotlinx.android.synthetic.main.activity_sched_recordings.*
-import nz.co.olliechick.hivo.util.Database
+import kotlinx.android.synthetic.main.activity_past_recording.*
 import nz.co.olliechick.hivo.util.Database.Companion.initialiseDb
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
-import java.util.ArrayList
+import java.util.*
 
 class PastRecordingActivity : AppCompatActivity() {
 
@@ -18,7 +17,7 @@ class PastRecordingActivity : AppCompatActivity() {
     var recordings: ArrayList<Recording> = arrayListOf()
         set(value) {
             field = value
-            list.adapter = SchedRecordingAdapter(this, field)
+            list.adapter = PastRecordingAdapter(this, field)
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
