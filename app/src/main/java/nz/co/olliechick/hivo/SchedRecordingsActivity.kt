@@ -89,7 +89,7 @@ class SchedRecordingsActivity : AppCompatActivity() {
 
         doAsync {
             db = initialiseDb(applicationContext)
-            val allRecordings = db.recordingDao().getAll()
+            val allRecordings = db.recordingDao().getSchedRecordings()
             uiThread {
                 recordings = ArrayList(allRecordings)
                 if (recordings.size == 0) {

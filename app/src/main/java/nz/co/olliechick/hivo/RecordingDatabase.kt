@@ -14,14 +14,17 @@ interface RecordingDao {
     @Delete
     fun delete(recording: Recording)
 
-    @Query("SELECT * FROM recordings")
-    fun getAll(): List<Recording>
-
     @Query("SELECT * FROM recordings WHERE end_date < :timestamp")
-    fun getRecordingsBeforeTimestamp(timestamp: Long): List<Recording>
+    fun getRecordingsEndingBeforeTimestamp(timestamp: Long): List<Recording>
 
     @Transaction
-    fun getPastRecordings(): List<Recording> = getRecordingsBeforeTimestamp(Date().time)
+    fun getPastRecordings(): List<Recording> = getRecordingsEndingBeforeTimestamp(Date().time)
+
+    @Query("SELECT * FROM recordings WHERE end_date > :timestamp")
+    fun getRecordingsEndingAfterTimestamp(timestamp: Long): List<Recording>
+
+    @Transaction
+    fun getSchedRecordings(): List<Recording> = getRecordingsEndingAfterTimestamp(Date().time)
 
     @Query(
         """SELECT CASE WHEN EXISTS (SELECT 1 FROM recordings WHERE name = :name)
