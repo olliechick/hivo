@@ -190,9 +190,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         R.id.past_recordings -> {
-            val intent = Intent(this, TestVisualisationActivity::class.java)
+            val intent = Intent(this, PastRecordingActivity::class.java)
             startActivity(intent)
-//            debugToast(this, "Not yet implemented")todo
             true
         }
 

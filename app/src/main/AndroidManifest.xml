@@ -22,6 +22,11 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="nz.co.olliechick.hivo.MainActivity" />
         </activity>
+        <activity android:name=".PastRecordingActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="nz.co.olliechick.hivo.MainActivity" />
+        </activity>
         <activity
             android:name=".SettingsActivity"
             android:label="@string/title_activity_settings">
@@ -38,7 +43,7 @@
         </activity>
         <activity android:name=".TestVisualisationActivity" />
 
-        <receiver android:name=".SchedRecordingReceiver"/>
+        <receiver android:name=".SchedRecordingReceiver" />
 
         <service android:name=".RecordingService" />
     </application>

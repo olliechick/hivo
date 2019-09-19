@@ -17,9 +17,17 @@ interface RecordingDao {
     @Query("SELECT * FROM recordings")
     fun getAll(): List<Recording>
 
-    @Query("""SELECT CASE WHEN EXISTS (SELECT 1 FROM recordings WHERE name = :name)
+    @Query("SELECT * FROM recordings WHERE end_date < :timestamp")
+    fun getRecordingsBeforeTimestamp(timestamp: Long): List<Recording>
+
+    @Transaction
+    fun getPastRecordings(): List<Recording> = getRecordingsBeforeTimestamp(Date().time)
+
+    @Query(
+        """SELECT CASE WHEN EXISTS (SELECT 1 FROM recordings WHERE name = :name)
                         THEN CAST (1 AS BIT)
-                        ELSE CAST (0 AS BIT) END""")
+                        ELSE CAST (0 AS BIT) END"""
+    )
     fun nameExists(name: String): Boolean
 }
 
