@@ -24,7 +24,7 @@ class SchedRecordingAdapter(
 
     var itemsPendingRemoval: ArrayList<Recording> = ArrayList()
 
-    private val handler = Handler() // hanlder for running delayed runnables
+    private val handler = Handler() // handler for running delayed runnables
     // map of items to pending runnables, so we can cancel a removal if need be
     private var pendingRunnables = HashMap<Recording, Runnable>()
 

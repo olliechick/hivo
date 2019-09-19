@@ -228,6 +228,14 @@ class SchedRecordingsActivity : AppCompatActivity() {
         }
     }
 
+    private fun getRecordingNameFromViewOrDefault(): String {
+        return if (usesCustomFilename(this)) {
+            val inputName = view?.name?.input?.text?.toString()
+            if (inputName == null || inputName == "") getString(R.string.no_title)
+            else inputName
+        } else getNameForRecording(this, startDate.time)!!
+    }
+
     @SuppressLint("InflateParams")
     private fun openScheduleRecordingDialog(initialStartDate: Calendar, initialEndDate: Calendar) {
         val builder = AlertDialog.Builder(this)
@@ -270,95 +278,106 @@ class SchedRecordingsActivity : AppCompatActivity() {
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
 
-                val name = if (usesCustomFilename(this)) {
-                    val inputName = view?.name?.input?.text?.toString()
-                    if (inputName == null || inputName == "") getString(R.string.no_title)
-                    else inputName
-                } else getNameForRecording(this, startDate.time)!!
-
+                val name = getRecordingNameFromViewOrDefault()
                 val overlappingRecordings = getOverlappingRecordings(recordings, startDate, endDate)
+                val validationDialogBuilder = AlertDialog.Builder(this)
+                val usesCustomName = usesCustomFilename(this)
 
                 // Validation
+                doAsync {
 
-                if (!startsBeforeItEnds()) {
-                    // Check start date is before end date
-                    AlertDialog.Builder(this).apply {
-                        setMessage(getString(R.string.start_time_not_after_end_time))
-                        setPositiveButton(getString(R.string.ok)) { subDialog, _ -> subDialog.dismiss() }
-                        create()
-                        show()
-                    }
+                    val nameExists = db.recordingDao().nameExists(name)
 
-                } else if (overlappingRecordings.isNotEmpty()) {
-                    // Check that there are no recordings scheduled for that time
-                    val nRecordings = overlappingRecordings.size
-                    var message = resources.getQuantityString(
-                        R.plurals.already_n_recordings_scheduled, nRecordings, nRecordings,
-                        formatDateRange(startDate, endDate)
-                    ) + "<ul style =\"list-style:none;\">"
-                    overlappingRecordings.forEach { message += "<li>${it.toHtml()}</li>" }
-                    message += "</ul>"
+                    uiThread {
+                        if (!startsBeforeItEnds()) {
+                            // Check start date is before end date
+                            validationDialogBuilder.apply {
+                                setMessage(getString(R.string.start_time_not_after_end_time))
+                                setPositiveButton(getString(R.string.ok)) { subDialog, _ -> subDialog.dismiss() }
 
-                    AlertDialog.Builder(this).apply {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                            setMessage(Html.fromHtml(message, Html.FROM_HTML_MODE_COMPACT))
-                        } else {
-                            @Suppress("DEPRECATION")
-                            setMessage(Html.fromHtml(message))
-                        }
-                        setPositiveButton(getString(R.string.ok)) { subDialog, _ -> subDialog.dismiss() }
-                        create()
-                        show()
-                    }
+                                create()
+                                show()
 
-                } else if (recordingNameExists(name)) {
-                    // Check that there is no file with that name
-                    val replacementName = generateUniqueName(name)
-                    if (usesCustomFilename(this)) {
-                        AlertDialog.Builder(this).apply {
-                            setTitle(getString(R.string.already_recording_with_name))
-                            setMessage(getString(R.string.save_as_instead, replacementName))
-                            setPositiveButton(getString(R.string.yes)) { subDialog, _ ->
-                                subDialog.dismiss()
-                                dialog.dismiss()
-                                scheduleRecording(replacementName)
                             }
-                            setNegativeButton(getString(R.string.no)) { subDialog, _ -> subDialog.dismiss() }
-                            create()
-                            show()
-                        }
-                    } else { // user doesn't specify name, so just use the replacement name
-                        dialog.dismiss()
-                        scheduleRecording(replacementName)
-                    }
 
-                } else if (!startsInTheFuture()) {
-                    // Check that it starts in the future
-                    AlertDialog.Builder(this).apply {
-                        setMessage(getString(R.string.recording_must_start_in_future))
-                        setPositiveButton(getString(R.string.ok)) { subDialog, _ ->
-                            subDialog.dismiss()
-                            updateValidationLabels()
-                        }
-                        create()
-                        show()
-                    }
+                        } else if (overlappingRecordings.isNotEmpty()) {
+                            // Check that there are no recordings scheduled for that time
+                            val nRecordings = overlappingRecordings.size
+                            var message = resources.getQuantityString(
+                                R.plurals.already_n_recordings_scheduled, nRecordings, nRecordings,
+                                formatDateRange(startDate, endDate)
+                            ) + "<ul style =\"list-style:none;\">"
+                            overlappingRecordings.forEach { message += "<li>${it.toHtml()}</li>" }
+                            message += "</ul>"
 
-                } else {
-                    // All valid :)
-                    scheduleRecording(name)
-                    dialog.dismiss()
+                            validationDialogBuilder.apply {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                    setMessage(Html.fromHtml(message, Html.FROM_HTML_MODE_COMPACT))
+                                } else {
+                                    @Suppress("DEPRECATION")
+                                    setMessage(Html.fromHtml(message))
+                                }
+                                setPositiveButton(getString(R.string.ok)) { subDialog, _ -> subDialog.dismiss() }
+
+                                create()
+                                show()
+
+                            }
+
+                        } else if (nameExists) {
+                            // Check that there is no file with that name
+                            doAsync {
+                                val replacementName = generateUniqueName(name)
+                                uiThread {
+                                    if (usesCustomName) {
+                                        validationDialogBuilder.apply {
+                                            setTitle(getString(R.string.already_recording_with_name))
+                                            setMessage(getString(R.string.save_as_instead, replacementName))
+                                            setPositiveButton(getString(R.string.yes)) { subDialog, _ ->
+                                                subDialog.dismiss()
+                                                dialog.dismiss()
+                                                scheduleRecording(replacementName)
+                                            }
+                                            setNegativeButton(getString(R.string.no)) { subDialog, _ -> subDialog.dismiss() }
+
+                                            create()
+                                            show()
+
+                                        }
+                                    } else { // user doesn't specify name, so just use the replacement name
+                                        dialog.dismiss()
+                                        scheduleRecording(replacementName)
+                                    }
+                                }
+                            }
+
+                        } else if (!startsInTheFuture()) {
+                            // Check that it starts in the future
+                            validationDialogBuilder.apply {
+                                setMessage(getString(R.string.recording_must_start_in_future))
+                                setPositiveButton(getString(R.string.ok)) { subDialog, _ ->
+                                    subDialog.dismiss()
+                                    updateValidationLabels()
+                                }
+
+                                create()
+                                show()
+
+                            }
+
+                        } else {
+                            // All valid :)
+                            scheduleRecording(name)
+                            dialog.dismiss()
+                        }
+                    }
                 }
             }
+
         }
 
+
         dialog.show()
-
-    }
-
-    private fun recordingNameExists(name: String): Boolean {
-        recordings.forEach { if (it.name == name) return true }
-        return false
     }
 
     /**
@@ -455,7 +474,7 @@ class SchedRecordingsActivity : AppCompatActivity() {
     private fun generateUniqueName(name: String): String {
         var filename = name
         var i = 2
-        while (recordingNameExists(filename)) {
+        while (db.recordingDao().nameExists(filename)) {
             filename = "$name ($i)"
             i++
         }
