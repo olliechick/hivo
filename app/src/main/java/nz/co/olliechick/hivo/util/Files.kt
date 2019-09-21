@@ -1,16 +1,14 @@
 package nz.co.olliechick.hivo.util
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Environment
 import android.util.Log
+import androidx.core.content.FileProvider
 import nz.co.olliechick.hivo.R
-import nz.co.olliechick.hivo.util.Constants.Companion.bitsPerSample
 import nz.co.olliechick.hivo.util.Constants.Companion.fileExt
-import nz.co.olliechick.hivo.util.Constants.Companion.numChannels
-import nz.co.olliechick.hivo.util.Constants.Companion.samplingRateHz
 import java.io.*
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 
 class Files {
     companion object {
@@ -38,6 +36,7 @@ class Files {
 
         /**
          * Returns the directory (external storage)/HiVo recordings
+         * If necessary, creates it.
          */
         private fun getPublicDirectory(context: Context): File? = File(
             Environment.getExternalStorageDirectory(),
@@ -59,5 +58,29 @@ class Files {
         }
 
         fun getRawFile(context: Context) = File(getPrivateDirectory(context), "recording.wav")
+
+        /**
+         * Launches an implicit intent to open the audio file at (external storage)/HiVo recordings/[recordingName].wav
+         */
+        fun launchImplicitAudioIntent(context: Context, recordingName: String) {
+            val filepath = getPublicDirectory(context).toString() + "/" + recordingName + fileExt
+            Log.i("hivo", "filepath=$filepath")
+            val fileUri: Uri? = try {
+                FileProvider.getUriForFile(context, "nz.co.olliechick.hivo.provider", File(filepath))
+            } catch (e: IllegalArgumentException) {
+                Log.e("hivo", e.toString())
+                null
+            }
+
+            if (fileUri != null) {
+                Intent(Intent.ACTION_VIEW).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    setDataAndType(fileUri, "audio/*")
+                    context.startActivity(this)
+                }
+            }
+
+
+        }
     }
 }
