@@ -287,6 +287,8 @@ class SchedRecordingsActivity : AppCompatActivity() {
                 doAsync {
 
                     val nameExists = db.recordingDao().nameExists(name)
+                    val replacementName = if (nameExists) generateUniqueName(name) else ""
+                    db.close()
 
                     uiThread {
                         if (!startsBeforeItEnds()) {
@@ -326,29 +328,24 @@ class SchedRecordingsActivity : AppCompatActivity() {
 
                         } else if (nameExists) {
                             // Check that there is no file with that name
-                            doAsync {
-                                val replacementName = generateUniqueName(name)
-                                uiThread {
-                                    if (usesCustomName) {
-                                        validationDialogBuilder.apply {
-                                            setTitle(getString(R.string.already_recording_with_name))
-                                            setMessage(getString(R.string.save_as_instead, replacementName))
-                                            setPositiveButton(getString(R.string.yes)) { subDialog, _ ->
-                                                subDialog.dismiss()
-                                                dialog.dismiss()
-                                                scheduleRecording(replacementName)
-                                            }
-                                            setNegativeButton(getString(R.string.no)) { subDialog, _ -> subDialog.dismiss() }
-
-                                            create()
-                                            show()
-
-                                        }
-                                    } else { // user doesn't specify name, so just use the replacement name
+                            if (usesCustomName) {
+                                validationDialogBuilder.apply {
+                                    setTitle(getString(R.string.already_recording_with_name))
+                                    setMessage(getString(R.string.save_as_instead, replacementName))
+                                    setPositiveButton(getString(R.string.yes)) { subDialog, _ ->
+                                        subDialog.dismiss()
                                         dialog.dismiss()
                                         scheduleRecording(replacementName)
                                     }
+                                    setNegativeButton(getString(R.string.no)) { subDialog, _ -> subDialog.dismiss() }
+
+                                    create()
+                                    show()
+
                                 }
+                            } else { // user doesn't specify name, so just use the replacement name
+                                dialog.dismiss()
+                                scheduleRecording(replacementName)
                             }
 
                         } else if (!startsInTheFuture()) {
