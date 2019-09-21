@@ -89,7 +89,7 @@ class RecordingService : Service() {
         val intent = Intent(recordingStartedIntent)
         sendBroadcast(intent)
 
-        Preferences.saveStartTime(PreferenceManager.getDefaultSharedPreferences(this))
+        Preferences.saveStartTime(this)
 
         recorder = AudioRecord(
             MediaRecorder.AudioSource.DEFAULT, samplingRateHz, CHANNEL_IN_CONFIG, audioFormat, BUFFER_SIZE

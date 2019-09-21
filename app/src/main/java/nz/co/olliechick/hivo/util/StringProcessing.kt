@@ -1,7 +1,8 @@
 package nz.co.olliechick.hivo.util
 
 import android.content.Context
-import androidx.preference.PreferenceManager
+import nz.co.olliechick.hivo.util.Preferences.Companion.getFilename
+import nz.co.olliechick.hivo.util.Preferences.Companion.getStartTime
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -30,10 +31,7 @@ class StringProcessing {
          * Example return: "2:59:35 PM, 1 Sep 2019"
          */
         fun getNameForCurrentRecording(context: Context): String? {
-            val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-            val date = Date().apply {
-                time = sharedPreferences.getLong(Constants.startTimeKey, Date().time)
-            }
+            val date = getStartTime(context)
             return getNameForRecording(context, date)
         }
 
@@ -44,16 +42,14 @@ class StringProcessing {
          * Example return: "2:59:35 PM, 1 Sep 2019"
          */
         fun getNameForRecording(context: Context, date: Date): String? {
-            val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-            val name = sharedPreferences.getString(Constants.filenameKey, null) ?: return null
-
-            return getDateString(
-                FilenameFormat.valueOf(
-                    name
-                ), date
-            )
+            val name = getFilename(context)
+            return if (name == null) null
+            else getDateString(FilenameFormat.valueOf(name), date)
         }
 
+        /**
+         * Returns true if the filename format setting is set to custom.
+         */
         fun usesCustomFilename(context: Context) = getNameForCurrentRecording(context) == null
 
         /**
@@ -87,6 +83,16 @@ class StringProcessing {
             dateRange += SimpleDateFormat(datetimeFormat, Locale.ENGLISH).format(endDate.time)
 
             return dateRange
+        }
+
+        fun generateUniqueName(name: String, nameExists: (String) -> Boolean): String {
+            var filename = name
+            var i = 2
+            while (nameExists(filename)) {
+                filename = "$name ($i)"
+                i++
+            }
+            return filename
         }
 
     }

@@ -8,7 +8,9 @@ import android.util.Log
 import androidx.core.content.FileProvider
 import nz.co.olliechick.hivo.R
 import nz.co.olliechick.hivo.util.Constants.Companion.fileExt
-import java.io.*
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 
 class Files {
     companion object {
@@ -74,7 +76,8 @@ class Files {
 
             if (fileUri != null) {
                 Intent(Intent.ACTION_VIEW).apply {
-                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    flags =
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
                     setDataAndType(fileUri, "audio/*")
                     context.startActivity(this)
                 }

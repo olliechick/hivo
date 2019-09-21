@@ -27,6 +27,7 @@ import nz.co.olliechick.hivo.util.Constants.Companion.validColour
 import nz.co.olliechick.hivo.util.Database.Companion.initialiseDb
 import nz.co.olliechick.hivo.util.Preferences.Companion.getMaximumRecordTime
 import nz.co.olliechick.hivo.util.Recordings.Companion.getOverlappingRecordings
+import nz.co.olliechick.hivo.util.StringProcessing
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.formatDateRange
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.getNameForRecording
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.usesCustomFilename
@@ -468,13 +469,7 @@ class SchedRecordingsActivity : AppCompatActivity() {
         }
     }
 
-    private fun generateUniqueName(name: String): String {
-        var filename = name
-        var i = 2
-        while (db.recordingDao().nameExists(filename)) {
-            filename = "$name ($i)"
-            i++
-        }
-        return filename
-    }
+    private fun generateUniqueName(name: String): String =
+        StringProcessing.generateUniqueName(name) { altName -> db.recordingDao().nameExists(altName) }
+
 }

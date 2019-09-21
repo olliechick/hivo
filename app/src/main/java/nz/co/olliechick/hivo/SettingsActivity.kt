@@ -59,11 +59,8 @@ class SettingsActivity : AppCompatActivity() {
                 .toArray(values)
             filenamePreference?.entryValues = values
 
-            if (filenamePreference != null && filenamePreference.value == null) {
-                val defaultValue = FilenameFormat.READABLE.name
-                PreferenceManager.getDefaultSharedPreferences(activity).getString(filenamePreference.key, defaultValue)
-                filenamePreference.value = defaultValue
-            }
+            // Set to filename preference to default if not assigned
+            if (filenamePreference?.value == null) filenamePreference?.value = FilenameFormat.READABLE.name
 
         }
     }
