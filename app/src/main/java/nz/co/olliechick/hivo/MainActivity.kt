@@ -45,6 +45,7 @@ import org.jetbrains.anko.image
 import org.jetbrains.anko.uiThread
 import java.io.FileInputStream
 import java.io.FileNotFoundException
+import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -354,8 +355,18 @@ class MainActivity : AppCompatActivity() {
     private fun saveWav(name: String) {
         toast(getString(R.string.saving))
         val saveSuccessful = saveWav(name, this)
-        if (saveSuccessful) toast(getString(R.string.saved)) //todo include name
-        else toast(getString(R.string.saving_failed))
+        if (saveSuccessful) {
+            doAsync {
+                // todo use start time and end time based on what user selects
+                val startDate = Calendar.getInstance().apply { time = getStartTime(this@MainActivity) }
+                val endDate = Calendar.getInstance()
+                val recording = Recording(name, startDate, endDate)
+                db = Database.initialiseDb(applicationContext)
+                recording.id = db.recordingDao().insert(recording)
+                db.close()
+                uiThread { toast(getString(R.string.saved)) } //todo include name
+            }
+        } else toast(getString(R.string.saving_failed))
     }
 
     @SuppressLint("InflateParams")
