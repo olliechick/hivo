@@ -5,7 +5,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.util.Log
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -21,7 +20,8 @@ class Recording(
     @ColumnInfo(name = "start_date") var startDate: Calendar,
     @ColumnInfo(name = "end_date") var endDate: Calendar
 ) {
-    @PrimaryKey(autoGenerate = true) var id: Long = 0
+    @PrimaryKey(autoGenerate = true)
+    var id: Long = 0
 
     private fun generatePendingIntent(applicationContext: Context, starts: Boolean): PendingIntent {
         val intent = Intent(applicationContext, SchedRecordingReceiver::class.java)

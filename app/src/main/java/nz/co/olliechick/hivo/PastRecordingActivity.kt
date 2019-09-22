@@ -7,7 +7,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_past_recording.*
 import nz.co.olliechick.hivo.util.Database.Companion.initialiseDb
 import nz.co.olliechick.hivo.util.Files.Companion.launchImplicitAudioIntent
-import nz.co.olliechick.hivo.util.Ui.Companion.toast
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
 import java.util.*
@@ -34,13 +33,12 @@ class PastRecordingActivity : AppCompatActivity() {
         list.addOnItemTouchListener(
             RecyclerItemClickListener(this, list, object : RecyclerItemClickListener.OnItemClickListener {
                 override fun onItemClick(view: View, position: Int) {
-                    toast("Opening ${recordings[position].name}...")
                     launchImplicitAudioIntent(this@PastRecordingActivity, recordings[position].name)
 
                 }
 
                 override fun onLongItemClick(view: View?, position: Int) {
-                    toast("Opening menu for ${recordings[position].name}...")
+                    //todo open menu
                 }
             })
         )

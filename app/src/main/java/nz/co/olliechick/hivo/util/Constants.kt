@@ -18,6 +18,7 @@ class Constants {
         const val amplitudeKey = "amplitude"
         const val startsKey = "start"
         const val nameKey = "name"
+        const val providerPath = "nz.co.olliechick.hivo.provider"
 
         // Default values
         const val defaultBuffer = 60 //minutes
@@ -39,15 +40,5 @@ class Constants {
 
         // Special numbers
         const val unsignedIntMaxValue = 4294967295 // 2^32 - 1
-
-        /**
-         * This is just for debug purposes, and should be removed for the delivered product. todo
-         */
-        fun debugToast(context: Context, text: String) {
-            Toast.makeText(context, text, Toast.LENGTH_SHORT).run {
-                setGravity(Gravity.CENTER, 0, 300)
-                show()
-            }
-        }
     }
 }

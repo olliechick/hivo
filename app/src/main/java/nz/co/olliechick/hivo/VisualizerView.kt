@@ -4,10 +4,9 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import androidx.core.content.res.ResourcesCompat
-import java.util.ArrayList
+import java.util.*
 
 class VisualizerView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
@@ -85,7 +84,6 @@ class VisualizerView(context: Context, attrs: AttributeSet) : View(context, attr
     }
 
     fun setAmplitudes(amplitudes: ArrayList<Int>) {
-        Log.i("FOO", "Adding ${amplitudes.size} amps")
         //todo actually add them amplitudes.forEach { addAmplitude(it) } doesn't work - ConcurrentModificationException
     }
 

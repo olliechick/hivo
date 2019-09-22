@@ -4,10 +4,10 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Environment
-import android.util.Log
 import androidx.core.content.FileProvider
 import nz.co.olliechick.hivo.R
 import nz.co.olliechick.hivo.util.Constants.Companion.fileExt
+import nz.co.olliechick.hivo.util.Constants.Companion.providerPath
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -66,11 +66,9 @@ class Files {
          */
         fun launchImplicitAudioIntent(context: Context, recordingName: String) {
             val filepath = getPublicDirectory(context).toString() + "/" + recordingName + fileExt
-            Log.i("hivo", "filepath=$filepath")
             val fileUri: Uri? = try {
-                FileProvider.getUriForFile(context, "nz.co.olliechick.hivo.provider", File(filepath))
+                FileProvider.getUriForFile(context, providerPath, File(filepath))
             } catch (e: IllegalArgumentException) {
-                Log.e("hivo", e.toString())
                 null
             }
 

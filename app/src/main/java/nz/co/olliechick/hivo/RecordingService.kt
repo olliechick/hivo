@@ -24,6 +24,7 @@ import nz.co.olliechick.hivo.util.Constants.Companion.samplingRateHz
 import nz.co.olliechick.hivo.util.Constants.Companion.unsignedIntMaxValue
 import nz.co.olliechick.hivo.util.Files
 import nz.co.olliechick.hivo.util.Preferences
+import nz.co.olliechick.hivo.util.Preferences.Companion.saveStartTime
 import nz.co.olliechick.hivo.util.Ui.Companion.toast
 import java.io.File
 import java.io.FileOutputStream
@@ -85,11 +86,11 @@ class RecordingService : Service() {
     }
 
     private fun startRecording() {
-        toast("Recording started.")
+        toast(getString(R.string.recording_started))
         val intent = Intent(recordingStartedIntent)
         sendBroadcast(intent)
 
-        Preferences.saveStartTime(this)
+        saveStartTime(this)
 
         recorder = AudioRecord(
             MediaRecorder.AudioSource.DEFAULT, samplingRateHz, CHANNEL_IN_CONFIG, audioFormat, BUFFER_SIZE
@@ -102,7 +103,7 @@ class RecordingService : Service() {
     }
 
     private fun stopRecording() {
-        toast("Recording stopped.")
+        toast(getString(R.string.recording_stopped))
         val intent = Intent(recordingStoppedIntent)
         sendBroadcast(intent)
 

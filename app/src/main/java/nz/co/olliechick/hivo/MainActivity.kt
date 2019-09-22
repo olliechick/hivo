@@ -23,7 +23,6 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.save_filename_dialog.view.*
 import nz.co.olliechick.hivo.util.Constants.Companion.amplitudeKey
 import nz.co.olliechick.hivo.util.Constants.Companion.audioFormat
-import nz.co.olliechick.hivo.util.Constants.Companion.debugToast
 import nz.co.olliechick.hivo.util.Constants.Companion.helpUrl
 import nz.co.olliechick.hivo.util.Constants.Companion.newAmplitudeIntent
 import nz.co.olliechick.hivo.util.Constants.Companion.recordingStartedIntent
@@ -322,13 +321,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun resumePlayback() {
-        debugToast(this, "Resuming.")
         isPaused = false
         playbackInProgress = true
     }
 
     private fun pausePlayback() {
-        debugToast(this, "Paused.")
         isPaused = true
         playbackInProgress = false
     }
@@ -336,7 +333,6 @@ class MainActivity : AppCompatActivity() {
     private fun stopPlayback() {
         inputStream?.close()
         inputStream = null
-        if (audio != null && playbackInProgress) debugToast(this, "Stopped.")
         audio?.takeIf { playbackInProgress }?.run {
             stop()
             release()
