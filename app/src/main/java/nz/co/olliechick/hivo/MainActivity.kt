@@ -174,6 +174,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         unregisterReceiver(amplitudeReceiver)
+        unregisterReceiver(recordingToggledReceiver)
         super.onDestroy()
     }
 
