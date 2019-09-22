@@ -56,7 +56,14 @@ class Files {
         fun saveWav(filename: String, context: Context): Boolean {
             val rawFile = getRawFile(context)
             val waveFile = File(getPublicDirectory(context), filename + fileExt)
-            return rawFile.renameTo(waveFile)
+            return try {
+                val successfulRename = rawFile.renameTo(waveFile)
+                // If renaming the raw file didn't work (e.g. because it is on a different drive), then move it.
+                if (!successfulRename) rawFile.copyTo(waveFile)
+                true
+            } catch (e: IOException) {
+                false
+            }
         }
 
         fun getRawFile(context: Context) = File(getPrivateDirectory(context), "recording.wav")
