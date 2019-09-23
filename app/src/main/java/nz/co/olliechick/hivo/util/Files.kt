@@ -59,7 +59,7 @@ class Files {
             return try {
                 val successfulRename = rawFile.renameTo(waveFile)
                 // If renaming the raw file didn't work (e.g. because it is on a different drive), then move it.
-                if (!successfulRename) rawFile.copyTo(waveFile)
+                if (!successfulRename) rawFile.copyTo(waveFile, overwrite=true)
                 true
             } catch (e: IOException) {
                 false
