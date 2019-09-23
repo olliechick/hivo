@@ -20,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_onboarding.*
 import kotlinx.android.synthetic.main.save_filename_dialog.view.*
 import nz.co.olliechick.hivo.util.Constants.Companion.amplitudeKey
 import nz.co.olliechick.hivo.util.Constants.Companion.audioFormat
@@ -32,6 +33,7 @@ import nz.co.olliechick.hivo.util.Database
 import nz.co.olliechick.hivo.util.Files.Companion.getRawFile
 import nz.co.olliechick.hivo.util.Files.Companion.saveWav
 import nz.co.olliechick.hivo.util.Preferences.Companion.getStartTime
+import nz.co.olliechick.hivo.util.Preferences.Companion.isOnboardingComplete
 import nz.co.olliechick.hivo.util.Recordings.Companion.startRecording
 import nz.co.olliechick.hivo.util.Recordings.Companion.stopRecording
 import nz.co.olliechick.hivo.util.StringProcessing
@@ -85,6 +87,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        if (!isOnboardingComplete(this)) startActivity(Intent(this, OnboardingActivity::class.java))
 
         checkPermissions(
             arrayOf(

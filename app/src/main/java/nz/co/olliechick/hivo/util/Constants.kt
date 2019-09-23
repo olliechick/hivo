@@ -18,6 +18,7 @@ class Constants {
         const val amplitudeKey = "amplitude"
         const val startsKey = "start"
         const val nameKey = "name"
+        val onboardingCompleteKey = "onboarding_complete"
         const val providerPath = "nz.co.olliechick.hivo.provider"
 
         // Default values

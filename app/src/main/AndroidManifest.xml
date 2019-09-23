@@ -41,6 +41,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".TestVisualisationActivity" />
+        <activity android:name=".OnboardingActivity" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
