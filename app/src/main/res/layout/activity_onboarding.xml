@@ -15,7 +15,6 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
-            android:onClick="toastHello"
             android:text="Skip" />
 
         <com.gc.materialdesign.views.ButtonFlat
@@ -29,6 +28,7 @@
 
     <androidx.viewpager.widget.ViewPager
         android:id="@+id/pager"
+        android:layout_above="@+id/navigation"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

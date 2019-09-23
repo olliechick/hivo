@@ -19,7 +19,7 @@ class OnboardingActivity : FragmentActivity() {
 
         setContentView(R.layout.activity_onboarding)
 
-        val adapter = object : FragmentStatePagerAdapter(supportFragmentManager) {
+        val adapter = object : FragmentStatePagerAdapter(supportFragmentManager, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
             override fun getItem(position: Int): Fragment {
                 return when (position) {
                     0 -> OnboardingFragment1()
@@ -40,17 +40,17 @@ class OnboardingActivity : FragmentActivity() {
 
         //next.setOnClickListener { toast("hi there") }
 
-//        next.setOnClickListener {
-//            toast("next clicked")
-//            if (pager.currentItem == 2) { // The last screen
-//                finishOnboarding()
-//            } else {
-//                pager.setCurrentItem(
-//                    pager.currentItem + 1,
-//                    true
-//                )
-//            }
-//        }
+        next.setOnClickListener {
+            toast("next clicked")
+            if (pager.currentItem == 2) { // The last screen
+                finishOnboarding()
+            } else {
+                pager.setCurrentItem(
+                    pager.currentItem + 1,
+                    true
+                )
+            }
+        }
 
 
         indicator.setOnPageChangeListener(object : ViewPager.SimpleOnPageChangeListener() {
@@ -68,15 +68,7 @@ class OnboardingActivity : FragmentActivity() {
 
     private fun finishOnboarding() {
         setOnboardingIsComplete(this)
-
-        // Launch the main Activity, called MainActivity
         startActivity(Intent(this, MainActivity::class.java))
-
-        // Close the OnboardingActivity
-        finish()
-    }
-
-    fun toastHello(view: View) {
-        toast("hello")
+        finish() //close onboarding activity
     }
 }
