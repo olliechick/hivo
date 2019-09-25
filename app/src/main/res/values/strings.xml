@@ -48,4 +48,10 @@
     <string name="saving_failed">Saving failed</string>
     <string name="recording_started">Recording started.</string>
     <string name="recording_stopped">Recording stopped.</string>
+    <string name="onboarding_title1">Welcome to HiVo!</string>
+    <string name="onboarding_message1">HiVo listens in the background. If something interesting happens, you can then save the audio.</string>
+    <string name="onboarding_title2">Schedule Recordings</string>
+    <string name="onboarding_message2">You can schedule HiVo to automatically record at a certain time.</string>
+    <string name="onboarding_title3">Ready to go?</string>
+    <string name="onboarding_messsage3">To start listening, just turn on the switch!</string>
 </resources>
