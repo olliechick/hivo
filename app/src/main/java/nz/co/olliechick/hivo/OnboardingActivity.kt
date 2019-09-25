@@ -9,7 +9,6 @@ import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.viewpager.widget.ViewPager
 import kotlinx.android.synthetic.main.activity_onboarding.*
 import nz.co.olliechick.hivo.util.Preferences.Companion.setOnboardingIsComplete
-import nz.co.olliechick.hivo.util.Ui.Companion.toast
 
 
 class OnboardingActivity : FragmentActivity() {
@@ -19,29 +18,25 @@ class OnboardingActivity : FragmentActivity() {
 
         setContentView(R.layout.activity_onboarding)
 
-        val adapter = object : FragmentStatePagerAdapter(supportFragmentManager, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
-            override fun getItem(position: Int): Fragment {
-                return when (position) {
-                    0 -> OnboardingFragment1()
-                    1 -> OnboardingFragment2()
-                    else -> OnboardingFragment3()
+        val adapter =
+            object : FragmentStatePagerAdapter(supportFragmentManager, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
+                override fun getItem(position: Int): Fragment {
+                    return when (position) {
+                        0 -> OnboardingFragment1()
+                        1 -> OnboardingFragment2()
+                        else -> OnboardingFragment3()
+                    }
                 }
-            }
 
-            override fun getCount() = 3
-        }
+                override fun getCount() = 3
+            }
 
         pager.adapter = adapter
         indicator.setViewPager(pager)
 
         skip.setOnClickListener { finishOnboarding() }
 
-        toast("oncreate")
-
-        //next.setOnClickListener { toast("hi there") }
-
         next.setOnClickListener {
-            toast("next clicked")
             if (pager.currentItem == 2) { // The last screen
                 finishOnboarding()
             } else {
@@ -52,6 +47,9 @@ class OnboardingActivity : FragmentActivity() {
             }
         }
 
+        // Increase click response on the buttons by speeding up the ripple effect
+        skip.rippleSpeed *= 12
+        next.rippleSpeed *= 12
 
         indicator.setOnPageChangeListener(object : ViewPager.SimpleOnPageChangeListener() {
             override fun onPageSelected(position: Int) {

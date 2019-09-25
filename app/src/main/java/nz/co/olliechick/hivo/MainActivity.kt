@@ -88,7 +88,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        if (!isOnboardingComplete(this)) startActivity(Intent(this, OnboardingActivity::class.java))
+        if (!isOnboardingComplete(this)) {
+            startActivity(Intent(this, OnboardingActivity::class.java))
+            return
+        }
 
         checkPermissions(
             arrayOf(
