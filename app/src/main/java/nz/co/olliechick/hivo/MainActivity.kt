@@ -89,7 +89,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         if (!isOnboardingComplete(this)) {
-            startActivity(Intent(this, OnboardingActivity::class.java))
+            startActivity(Intent(this, OnboardingActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+            })
+            finish()
             return
         }
 
