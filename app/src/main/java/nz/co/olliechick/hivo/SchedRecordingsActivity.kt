@@ -327,6 +327,20 @@ class SchedRecordingsActivity : AppCompatActivity() {
 
                             }
 
+                        } else if (!startsInTheFuture()) {
+                            // Check that it starts in the future
+                            validationDialogBuilder.apply {
+                                setMessage(getString(R.string.recording_must_start_in_future))
+                                setPositiveButton(getString(R.string.ok)) { subDialog, _ ->
+                                    subDialog.dismiss()
+                                    updateValidationLabels()
+                                }
+
+                                create()
+                                show()
+
+                            }
+
                         } else if (nameExists) {
                             // Check that there is no file with that name
                             if (usesCustomName) {
@@ -347,20 +361,6 @@ class SchedRecordingsActivity : AppCompatActivity() {
                             } else { // user doesn't specify name, so just use the replacement name
                                 dialog.dismiss()
                                 scheduleRecording(replacementName)
-                            }
-
-                        } else if (!startsInTheFuture()) {
-                            // Check that it starts in the future
-                            validationDialogBuilder.apply {
-                                setMessage(getString(R.string.recording_must_start_in_future))
-                                setPositiveButton(getString(R.string.ok)) { subDialog, _ ->
-                                    subDialog.dismiss()
-                                    updateValidationLabels()
-                                }
-
-                                create()
-                                show()
-
                             }
 
                         } else {
