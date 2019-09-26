@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "471985894802",
+    "firebase_url": "https://hivo-801b6.firebaseio.com",
+    "project_id": "hivo-801b6",
+    "storage_bucket": "hivo-801b6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:471985894802:android:9fc324c6add139bb723d4b",
+        "android_client_info": {
+          "package_name": "nz.co.olliechick.hivo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "471985894802-fgmk8791e1986mum9pqb71suf8ecgq8o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDYsDa639sswZILhR3e1Gwf1scP9_X_lEM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "471985894802-fgmk8791e1986mum9pqb71suf8ecgq8o.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
