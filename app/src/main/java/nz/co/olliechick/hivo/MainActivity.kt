@@ -180,8 +180,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        unregisterReceiver(amplitudeReceiver)
-        unregisterReceiver(recordingToggledReceiver)
+        try {
+            unregisterReceiver(amplitudeReceiver)
+        } catch (e: IllegalArgumentException) {
+        }
+        try {
+            unregisterReceiver(recordingToggledReceiver)
+        } catch (e: IllegalArgumentException) {
+        }
         super.onDestroy()
     }
 
