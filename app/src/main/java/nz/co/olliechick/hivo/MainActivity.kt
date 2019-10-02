@@ -20,7 +20,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.activity_onboarding.*
 import kotlinx.android.synthetic.main.save_filename_dialog.view.*
 import nz.co.olliechick.hivo.util.Constants.Companion.amplitudeKey
 import nz.co.olliechick.hivo.util.Constants.Companion.audioFormat
@@ -30,6 +29,7 @@ import nz.co.olliechick.hivo.util.Constants.Companion.recordingStartedIntent
 import nz.co.olliechick.hivo.util.Constants.Companion.recordingStoppedIntent
 import nz.co.olliechick.hivo.util.Constants.Companion.samplingRateHz
 import nz.co.olliechick.hivo.util.Database
+import nz.co.olliechick.hivo.util.Files
 import nz.co.olliechick.hivo.util.Files.Companion.getRawFile
 import nz.co.olliechick.hivo.util.Files.Companion.saveWav
 import nz.co.olliechick.hivo.util.Preferences.Companion.getStartTime
@@ -359,12 +359,6 @@ class MainActivity : AppCompatActivity() {
 
     // Saving audio
 
-    private fun save() {
-        val dateString = getNameForCurrentRecording(this)
-        if (dateString == null) promptForFilenameAndSave()
-        else saveWav(dateString)
-    }
-
     private fun saveWav(name: String) {
         toast(getString(R.string.saving))
         val saveSuccessful = saveWav(name, this)
@@ -383,60 +377,59 @@ class MainActivity : AppCompatActivity() {
     }
 
     @SuppressLint("InflateParams")
-    private fun promptForFilenameAndSave() {
+    private fun save() {
         view = layoutInflater.inflate(R.layout.save_filename_dialog, null)
-        AlertDialog.Builder(this).apply {
+        val dialog = AlertDialog.Builder(this).run {
             setView(view)
             setTitle(getString(R.string.save_recording))
             setPositiveButton(getString(R.string.save), null) // will be overridden
             setNegativeButton(getString(R.string.cancel)) { dialog, _ -> dialog.cancel() }
+            create()
+        }
+        // Override positive button, so that it only dismisses if validation passes
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                doAsync {
+                    val name = getRecordingNameFromViewOrDefault()
 
-            create().apply {
-                // Override positive button, so that it only dismisses if validation passes
-                setOnShowListener {
-                    getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                        doAsync {
-                            val name = getRecordingNameFromViewOrDefault()
+                    db = Database.initialiseDb(applicationContext)
+                    val nameExists = db.recordingDao().nameExists(name)
+                    val replacementName = if (nameExists) generateUniqueName(name) else ""
+                    db.close()
 
-                            db = Database.initialiseDb(applicationContext)
-                            val nameExists = db.recordingDao().nameExists(name)
-                            val replacementName = if (nameExists) generateUniqueName(name) else ""
-                            db.close()
-
-                            uiThread {
-                                if (nameExists) {
-                                    if (usesCustomFilename(this@MainActivity)) {
-                                        AlertDialog.Builder(this@MainActivity).apply {
-                                            setTitle(getString(R.string.already_recording_with_name))
-                                            setMessage(getString(R.string.save_as_instead, replacementName))
-                                            setPositiveButton(getString(R.string.yes)) { subDialog, _ ->
-                                                dismiss()
-                                                subDialog.dismiss()
-                                                saveWav(name)
-                                            }
-                                            setNegativeButton(getString(R.string.no)) { subDialog, _ -> subDialog.dismiss() }
-
-                                            create()
-                                            show()
-                                        }
-                                    } else { // user doesn't specify name, so just use the replacement name
-                                        dismiss()
-                                        saveWav(replacementName)
+                    uiThread {
+                        if (nameExists) {
+                            if (usesCustomFilename(this@MainActivity)) {
+                                AlertDialog.Builder(this@MainActivity).apply {
+                                    setTitle(getString(R.string.already_recording_with_name))
+                                    setMessage(getString(R.string.save_as_instead, replacementName))
+                                    setPositiveButton(getString(R.string.yes)) { subDialog, _ ->
+                                        dialog.dismiss()
+                                        subDialog.dismiss()
+                                        saveWav(name)
                                     }
-                                } else {
-                                    // All valid :)
-                                    dismiss()
-                                    saveWav(name)
+                                    setNegativeButton(getString(R.string.no)) { subDialog, _ -> subDialog.dismiss() }
+
+                                    create()
+                                    show()
                                 }
+                            } else { // user doesn't specify name, so just use the replacement name
+                                dialog.dismiss()
+                                saveWav(replacementName)
                             }
+                        } else {
+                            // All valid :)
+                            dialog.dismiss()
+                            saveWav(name)
                         }
                     }
                 }
-
-                show()
             }
         }
+
+        dialog.show()
     }
+
 
     private fun getRecordingNameFromViewOrDefault(): String {
         return if (usesCustomFilename(this)) {
