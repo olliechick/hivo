@@ -96,9 +96,14 @@ class StringProcessing {
         }
 
         /**
-         * Returns the time portion of a Date formatted h:mm.
+         * Returns the time portion of a Date formatted h:mm a, e.g. 12:26 PM.
          */
-        fun getTimeString(date: Date): String = SimpleDateFormat("h:mm", Locale.US).format(date)
+        fun getTimeString(date: Date): String = SimpleDateFormat("h:mm a", Locale.US).format(date)
+
+        /**
+         * Returns the time portion of a Calendar formatted h:mm a, e.g. 12:26 PM.
+         */
+        fun getTimeString(cal: Calendar): String = getTimeString(cal.time)
 
     }
 }

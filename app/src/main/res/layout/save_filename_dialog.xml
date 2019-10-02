@@ -22,34 +22,28 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:baselineAligned="false">
+        android:baselineAligned="false"
+        android:orientation="horizontal">
 
-        <com.google.android.material.textfield.TextInputLayout
+        <Button
+            android:id="@+id/startTime"
+            style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="@string/start_time">
+            android:fontFamily="sans-serif"
+            android:textAllCaps="false"
+            android:textSize="18sp" />
 
-            <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/startText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                tools:ignore="RtlSymmetry" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
+        <Button
+            android:id="@+id/endTime"
+            style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="@string/end_time">
-
-            <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/endText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                tools:ignore="RtlSymmetry" />
-        </com.google.android.material.textfield.TextInputLayout>
+            android:fontFamily="sans-serif"
+            android:textAllCaps="false"
+            android:textSize="18sp" />
 
     </LinearLayout>
 

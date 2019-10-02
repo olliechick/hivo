@@ -31,6 +31,8 @@ import nz.co.olliechick.hivo.util.StringProcessing
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.formatDateRange
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.getNameForRecording
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.usesCustomFilename
+import nz.co.olliechick.hivo.util.Ui.Companion.showDatePicker
+import nz.co.olliechick.hivo.util.Ui.Companion.showTimePicker
 import nz.co.olliechick.hivo.util.Ui.Companion.toast
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.onClick
@@ -376,49 +378,6 @@ class SchedRecordingsActivity : AppCompatActivity() {
 
 
         dialog.show()
-    }
-
-    /**
-     * Opens a date picker initialised to date.
-     * It then calls setDateCallback with the date the user picked.
-     */
-    private fun showDatePicker(
-        context: Context,
-        date: Calendar,
-        setDateCallback: () -> Unit
-    ) {
-        DatePickerDialog(
-            context,
-            DatePickerDialog.OnDateSetListener { _, year, monthOfYear, dayOfMonth ->
-                date.apply {
-                    set(Calendar.YEAR, year)
-                    set(Calendar.MONTH, monthOfYear)
-                    set(Calendar.DAY_OF_MONTH, dayOfMonth)
-                }
-                setDateCallback()
-            },
-            date.get(Calendar.YEAR),
-            date.get(Calendar.MONTH),
-            date.get(Calendar.DATE)
-        ).run { show() }
-    }
-
-    /**
-     * Opens a time picker initialised to date.
-     * It then calls setTimeCallback with the time the user picked.
-     */
-    private fun showTimePicker(
-        context: Context,
-        date: Calendar,
-        setTimeCallback: () -> Unit
-    ) {
-        TimePickerDialog(context, TimePickerDialog.OnTimeSetListener { _, hourOfDay, minute ->
-            date.apply {
-                set(Calendar.HOUR_OF_DAY, hourOfDay)
-                set(Calendar.MINUTE, minute)
-            }
-            setTimeCallback()
-        }, date.get(Calendar.HOUR_OF_DAY), date.get(Calendar.MINUTE), false).show()
     }
 
     private fun setDate(date: Calendar, dateButton: Button) {

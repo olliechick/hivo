@@ -56,4 +56,5 @@
     <string name="onboarding_messsage3">To start listening, just turn on the switch!</string>
     <string name="start_time">Start time</string>
     <string name="end_time">End time</string>
+    <string name="start_and_end_must_be_valid">The start must be between %1s and the end, and the end must be between the start and %2s.</string>
 </resources>

@@ -21,6 +21,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.save_filename_dialog.view.*
+import nz.co.olliechick.hivo.util.*
 import nz.co.olliechick.hivo.util.Constants.Companion.amplitudeKey
 import nz.co.olliechick.hivo.util.Constants.Companion.audioFormat
 import nz.co.olliechick.hivo.util.Constants.Companion.helpUrl
@@ -28,22 +29,17 @@ import nz.co.olliechick.hivo.util.Constants.Companion.newAmplitudeIntent
 import nz.co.olliechick.hivo.util.Constants.Companion.recordingStartedIntent
 import nz.co.olliechick.hivo.util.Constants.Companion.recordingStoppedIntent
 import nz.co.olliechick.hivo.util.Constants.Companion.samplingRateHz
-import nz.co.olliechick.hivo.util.Database
 import nz.co.olliechick.hivo.util.Files.Companion.getRawFile
 import nz.co.olliechick.hivo.util.Files.Companion.saveWav
-import nz.co.olliechick.hivo.util.Preferences
 import nz.co.olliechick.hivo.util.Preferences.Companion.getStartTime
 import nz.co.olliechick.hivo.util.Preferences.Companion.isOnboardingComplete
 import nz.co.olliechick.hivo.util.Recordings.Companion.startRecording
 import nz.co.olliechick.hivo.util.Recordings.Companion.stopRecording
-import nz.co.olliechick.hivo.util.StringProcessing
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.getNameForRecording
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.getTimeString
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.usesCustomFilename
 import nz.co.olliechick.hivo.util.Ui.Companion.toast
-import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.image
-import org.jetbrains.anko.uiThread
+import org.jetbrains.anko.*
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.util.*
@@ -383,6 +379,15 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("InflateParams")
     private fun save() {
         view = layoutInflater.inflate(R.layout.save_filename_dialog, null)
+
+        val start = Calendar.getInstance().apply { time = getStartTime(this@MainActivity) }
+        val end = Calendar.getInstance().apply { time = getEndTime(this@MainActivity) }
+
+        /** True if the recording stopped in the same minute it started. */
+        val recordingAllInOneMinute = start.get(Calendar.MINUTE) == end.get(Calendar.MINUTE)
+        val startClip = start.clone() as Calendar
+        val endClip = end.clone() as Calendar
+
         val dialog = AlertDialog.Builder(this).run {
             setView(view)
 
@@ -390,14 +395,45 @@ class MainActivity : AppCompatActivity() {
             setPositiveButton(getString(R.string.save), null) // will be overridden
             setNegativeButton(getString(R.string.cancel)) { dialog, _ -> dialog.cancel() }
 
-            view?.startText?.setText(getTimeString(getStartTime(this@MainActivity)))
-            view?.endText?.setText(getTimeString(getEndTime(this@MainActivity)))
+            view?.startTime?.run {
+                text = getTimeString(startClip)
+
+                fun update() {
+                    text = getTimeString(startClip)
+                }
+                onClick {
+                    Ui.showTimePicker(this@MainActivity, startClip, ::update)
+                }
+
+                onLongClick {
+                    toast("Start time")
+                    true
+                }
+            }
+            view?.endTime?.run {
+                text = getTimeString(endClip)
+
+                fun update() {
+                    text = getTimeString(endClip)
+                }
+                onClick {
+                    Ui.showTimePicker(this@MainActivity, endClip, ::update)
+                }
+
+                onLongClick {
+                    toast("End time")
+                    true
+                }
+            }
 
             create()
         }
+
+
         // Override positive button, so that it only dismisses if validation passes
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val validationDialogBuilder = AlertDialog.Builder(this)
                 doAsync {
                     val name = getRecordingNameFromViewOrDefault()
 
@@ -407,7 +443,32 @@ class MainActivity : AppCompatActivity() {
                     db.close()
 
                     uiThread {
-                        if (nameExists) {
+                        val startMins = start.getTimeInMinutes()
+                        val startClipMins = startClip.getTimeInMinutes()
+                        val endClipMins = endClip.getTimeInMinutes()
+                        val endMins = end.getTimeInMinutes()
+
+                        if ((recordingAllInOneMinute && !(startMins == startClipMins && startClipMins == endClipMins))
+                            || (!recordingAllInOneMinute && !(startClipMins in startMins until endClipMins && endClipMins <= endMins))
+                        ) {
+                            // Passes (i.e. we don't get here) if we didn't record it all in the same minute, or we did and chose that minute,
+                            // OR we did record all in one minute, or start <= start of clip < end of clip <= end
+
+                            validationDialogBuilder.apply {
+                                setMessage(
+                                    getString(
+                                        R.string.start_and_end_must_be_valid,
+                                        getTimeString(start), getTimeString(end)
+                                    )
+                                )
+                                setPositiveButton(getString(R.string.ok)) { subDialog, _ ->
+                                    subDialog.dismiss()
+                                }
+                                create()
+                                show()
+                            }
+                        } else if (nameExists) {
+                            // Passes if name is unique (doesn't exist)
                             if (usesCustomFilename(this@MainActivity)) {
                                 AlertDialog.Builder(this@MainActivity).apply {
                                     setTitle(getString(R.string.already_recording_with_name))
@@ -439,6 +500,9 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
+    private fun getClipStartFromView(): Date? {
+        return null
+    }
 
     private fun getRecordingNameFromViewOrDefault(): String {
         return if (usesCustomFilename(this)) {
