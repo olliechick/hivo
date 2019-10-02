@@ -95,5 +95,10 @@ class StringProcessing {
             return filename
         }
 
+        /**
+         * Returns the time portion of a Date formatted h:mm.
+         */
+        fun getTimeString(date: Date): String = SimpleDateFormat("h:mm", Locale.US).format(date)
+
     }
 }

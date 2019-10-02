@@ -24,7 +24,7 @@ class VisualizerView(context: Context, attrs: AttributeSet) : View(context, attr
     override fun onSizeChanged(width: Int, height: Int, oldw: Int, oldh: Int) {
         screenWidth = width
         screenHeight = height
-        vectors = FloatArray(this.screenWidth * 4) // xxyy for each line across the screenWidth
+        vectors = FloatArray(this.screenWidth * 4) // xyxy for each line across the screenWidth
     }
 
     private fun amplitudeToHeightOnScreen(amplitude: Int) =

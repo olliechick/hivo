@@ -10,6 +10,7 @@ import android.media.MediaRecorder
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.preference.PreferenceManager
 import nz.co.olliechick.hivo.util.Constants
@@ -24,6 +25,7 @@ import nz.co.olliechick.hivo.util.Constants.Companion.samplingRateHz
 import nz.co.olliechick.hivo.util.Constants.Companion.unsignedIntMaxValue
 import nz.co.olliechick.hivo.util.Files
 import nz.co.olliechick.hivo.util.Preferences
+import nz.co.olliechick.hivo.util.Preferences.Companion.saveEndTime
 import nz.co.olliechick.hivo.util.Preferences.Companion.saveStartTime
 import nz.co.olliechick.hivo.util.Ui.Companion.toast
 import java.io.File
@@ -109,6 +111,7 @@ class RecordingService : Service() {
 
         recordingInProgress.set(false)
         recorder?.stop()
+        saveEndTime(this)
         recorder?.release()
         recorder = null
     }
@@ -139,6 +142,7 @@ class RecordingService : Service() {
                     // Save and send amplitude
                     val amplitude = generateAmplitude(buffer)
                     amplitudes.add(amplitude)
+                    Log.i("hivo", "amps $amplitude $totalBytesWritten")
                     val intent = Intent(newAmplitudeIntent)
                     intent.putExtra(amplitudeKey, amplitude)
                     sendBroadcast(intent)

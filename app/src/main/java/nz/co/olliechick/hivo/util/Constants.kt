@@ -10,6 +10,7 @@ class Constants {
     companion object {
         // Internal keys/action names
         const val startTimeKey = "start_time"
+        const val endTimeKey = "end_time"
         const val filenameKey = "filename" //also defined in root_preferences.xml
         const val bufferKey = "buffer"
         const val newAmplitudeIntent = "new_amplitude"

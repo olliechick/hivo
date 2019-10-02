@@ -14,6 +14,9 @@ class Preferences {
         fun saveStartTime(context: Context) =
             getPrefs(context).edit().putLong(Constants.startTimeKey, Date().time).apply()
 
+        fun saveEndTime(context: Context) =
+            getPrefs(context).edit().putLong(Constants.endTimeKey, Date().time).apply()
+
         fun setOnboardingIsComplete(context: Context) =
             getPrefs(context).edit().putBoolean(Constants.onboardingCompleteKey, true).apply()
 
@@ -25,6 +28,9 @@ class Preferences {
 
         fun getStartTime(context: Context): Date =
             Date().apply { time = getPrefs(context).getLong(Constants.startTimeKey, Date().time) }
+
+        fun getEndTime(context: Context): Date =
+            Date().apply { time = getPrefs(context).getLong(Constants.endTimeKey, Date().time) }
 
         fun getFilename(context: Context): String? = getPrefs(context).getString(Constants.filenameKey, null) ?: null
 

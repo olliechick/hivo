@@ -54,4 +54,6 @@
     <string name="onboarding_message2">You can schedule HiVo to automatically record at a certain time.</string>
     <string name="onboarding_title3">Ready to go?</string>
     <string name="onboarding_messsage3">To start listening, just turn on the switch!</string>
+    <string name="start_time">Start time</string>
+    <string name="end_time">End time</string>
 </resources>

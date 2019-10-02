@@ -29,16 +29,16 @@ import nz.co.olliechick.hivo.util.Constants.Companion.recordingStartedIntent
 import nz.co.olliechick.hivo.util.Constants.Companion.recordingStoppedIntent
 import nz.co.olliechick.hivo.util.Constants.Companion.samplingRateHz
 import nz.co.olliechick.hivo.util.Database
-import nz.co.olliechick.hivo.util.Files
 import nz.co.olliechick.hivo.util.Files.Companion.getRawFile
 import nz.co.olliechick.hivo.util.Files.Companion.saveWav
+import nz.co.olliechick.hivo.util.Preferences
 import nz.co.olliechick.hivo.util.Preferences.Companion.getStartTime
 import nz.co.olliechick.hivo.util.Preferences.Companion.isOnboardingComplete
 import nz.co.olliechick.hivo.util.Recordings.Companion.startRecording
 import nz.co.olliechick.hivo.util.Recordings.Companion.stopRecording
 import nz.co.olliechick.hivo.util.StringProcessing
-import nz.co.olliechick.hivo.util.StringProcessing.Companion.getNameForCurrentRecording
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.getNameForRecording
+import nz.co.olliechick.hivo.util.StringProcessing.Companion.getTimeString
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.usesCustomFilename
 import nz.co.olliechick.hivo.util.Ui.Companion.toast
 import org.jetbrains.anko.doAsync
@@ -59,6 +59,7 @@ class MainActivity : AppCompatActivity() {
                 if (value) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
             )
         }
+    private var recordingInProgress = false
 
     private var audio: AudioTrack? = null
     private var inputStream: FileInputStream? = null
@@ -77,8 +78,9 @@ class MainActivity : AppCompatActivity() {
 
     private val recordingToggledReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == recordingStartedIntent) recordingSwitch.isChecked = true
-            else if (intent?.action == recordingStoppedIntent) recordingSwitch.isChecked = false
+            if (intent?.action == recordingStartedIntent) recordingInProgress = true
+            else if (intent?.action == recordingStoppedIntent) recordingInProgress = false
+            recordingSwitch.isChecked = recordingInProgress
         }
     }
 
@@ -131,8 +133,10 @@ class MainActivity : AppCompatActivity() {
             if (buttonView.isPressed) {
                 if (isChecked) {
                     startRecording(this)
+                    recordingInProgress = true
                 } else {
                     stopRecording(this)
+                    recordingInProgress = false
                     stopPlayback()
                 }
             }
@@ -381,9 +385,14 @@ class MainActivity : AppCompatActivity() {
         view = layoutInflater.inflate(R.layout.save_filename_dialog, null)
         val dialog = AlertDialog.Builder(this).run {
             setView(view)
+
             setTitle(getString(R.string.save_recording))
             setPositiveButton(getString(R.string.save), null) // will be overridden
             setNegativeButton(getString(R.string.cancel)) { dialog, _ -> dialog.cancel() }
+
+            view?.startText?.setText(getTimeString(getStartTime(this@MainActivity)))
+            view?.endText?.setText(getTimeString(getEndTime(this@MainActivity)))
+
             create()
         }
         // Override positive button, so that it only dismisses if validation passes
@@ -441,6 +450,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun generateUniqueName(name: String): String =
         StringProcessing.generateUniqueName(name) { altName -> db.recordingDao().nameExists(altName) }
+
+    /**
+     * Returns the recording end time (this will be now if a recording is in progress).
+     */
+    private fun getEndTime(context: Context): Date =
+        if (recordingInProgress) Date() else Preferences.getEndTime(context)
 
     companion object {
         private const val CHANNEL_OUT_CONFIG = AudioFormat.CHANNEL_OUT_STEREO
