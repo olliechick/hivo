@@ -406,7 +406,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 onLongClick {
-                    toast("Start time")
+                    toast(getString(R.string.start_time))
                     true
                 }
             }
@@ -421,9 +421,15 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 onLongClick {
-                    toast("End time")
+                    toast(getString(R.string.end_time))
                     true
                 }
+            }
+
+            if (recordingAllInOneMinute && !recordingInProgress) {
+                // Recording cannot extend beyond the minute it was in, so editing times is disabled.
+                view?.startTime?.enabled = false
+                view?.endTime?.enabled = false
             }
 
             create()
