@@ -34,6 +34,7 @@ import nz.co.olliechick.hivo.util.StringProcessing.Companion.usesCustomFilename
 import nz.co.olliechick.hivo.util.Ui.Companion.showDatePicker
 import nz.co.olliechick.hivo.util.Ui.Companion.showTimePicker
 import nz.co.olliechick.hivo.util.Ui.Companion.toast
+import nz.co.olliechick.hivo.util.getTimeInMinutes
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.onClick
 import org.jetbrains.anko.textColor
@@ -343,6 +344,16 @@ class SchedRecordingsActivity : AppCompatActivity() {
 
                             }
 
+                        } else if (endDate.getTimeInMinutes() - startDate.getTimeInMinutes() > 6 * 60) {
+                            // Passes if clip is shorter than 6 hours
+                            validationDialogBuilder.apply {
+                                setMessage(getString(R.string.recordings_must_be_less_than_6_hrs))
+                                setPositiveButton(getString(R.string.ok)) { subDialog, _ ->
+                                    subDialog.dismiss()
+                                }
+                                create()
+                                show()
+                            }
                         } else if (nameExists) {
                             // Check that there is no file with that name
                             if (usesCustomName) {
