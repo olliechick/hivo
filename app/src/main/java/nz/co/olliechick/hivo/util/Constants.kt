@@ -19,7 +19,7 @@ class Constants {
         const val amplitudeKey = "amplitude"
         const val startsKey = "start"
         const val nameKey = "name"
-        val onboardingCompleteKey = "onboarding_complete"
+        const val onboardingCompleteKey = "onboarding_complete"
         const val providerPath = "nz.co.olliechick.hivo.provider"
 
         // Default values
@@ -31,6 +31,8 @@ class Constants {
         const val bitsPerSample = 16
         const val audioFormat = AudioFormat.ENCODING_PCM_16BIT
         const val fileExt = ".wav"
+        const val sizeOfWavHeader = 44
+        const val blockAlign = numChannels * (bitsPerSample / 8)
 
         // UI
         const val invalidColour = Color.RED

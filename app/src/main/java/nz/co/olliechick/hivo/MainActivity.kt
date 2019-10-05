@@ -359,15 +359,26 @@ class MainActivity : AppCompatActivity() {
 
     // Saving audio
 
-    private fun saveWav(name: String) {
+    private fun saveWav(name: String, startClip: Calendar, endClip: Calendar) {
         toast(getString(R.string.saving))
-        val saveSuccessful = saveWav(name, this)
+
+        val start = Calendar.getInstance().apply { time = getStartTime(this@MainActivity) }
+        val end = Calendar.getInstance().apply { time = getEndTime(this@MainActivity) }
+
+        // Fix up seconds and millis
+        if (startClip.getTimeInMinutes() == start.getTimeInMinutes()) startClip.setSecondsAndMillis(start)
+        else startClip.zeroSecondsAndMillis()
+        if (endClip.getTimeInMinutes() == end.getTimeInMinutes()) endClip.setSecondsAndMillis(end)
+        else endClip.zeroSecondsAndMillis()
+
+        val millisBeforeStart: Long = startClip.timeInMillis - start.timeInMillis
+        val durationInMillis: Long = endClip.timeInMillis - startClip.timeInMillis
+
+        val saveSuccessful = saveWav(name, millisBeforeStart, durationInMillis, this)
+
         if (saveSuccessful) {
             doAsync {
-                // todo use start time and end time based on what user selects
-                val startDate = Calendar.getInstance().apply { time = getStartTime(this@MainActivity) }
-                val endDate = Calendar.getInstance()
-                val recording = Recording(name, startDate, endDate)
+                val recording = Recording(name, startClip, endClip)
                 db = Database.initialiseDb(applicationContext)
                 recording.id = db.recordingDao().insert(recording)
                 db.close()
@@ -385,6 +396,7 @@ class MainActivity : AppCompatActivity() {
 
         /** True if the recording stopped in the same minute it started. */
         val recordingAllInOneMinute = start.get(Calendar.MINUTE) == end.get(Calendar.MINUTE)
+
         val startClip = start.clone() as Calendar
         val endClip = end.clone() as Calendar
 
@@ -430,6 +442,10 @@ class MainActivity : AppCompatActivity() {
                 // Recording cannot extend beyond the minute it was in, so editing times is disabled.
                 view?.startTime?.enabled = false
                 view?.endTime?.enabled = false
+            }
+
+            if (!usesCustomFilename(this@MainActivity)) {
+                view?.input?.visibility = View.GONE
             }
 
             create()
@@ -482,7 +498,7 @@ class MainActivity : AppCompatActivity() {
                                     setPositiveButton(getString(R.string.yes)) { subDialog, _ ->
                                         dialog.dismiss()
                                         subDialog.dismiss()
-                                        saveWav(name)
+                                        saveWav(name, startClip, endClip)
                                     }
                                     setNegativeButton(getString(R.string.no)) { subDialog, _ -> subDialog.dismiss() }
 
@@ -491,12 +507,12 @@ class MainActivity : AppCompatActivity() {
                                 }
                             } else { // user doesn't specify name, so just use the replacement name
                                 dialog.dismiss()
-                                saveWav(replacementName)
+                                saveWav(replacementName, startClip, endClip)
                             }
                         } else {
                             // All valid :)
                             dialog.dismiss()
-                            saveWav(name)
+                            saveWav(name, startClip, endClip)
                         }
                     }
                 }
@@ -504,10 +520,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         dialog.show()
-    }
-
-    private fun getClipStartFromView(): Date? {
-        return null
     }
 
     private fun getRecordingNameFromViewOrDefault(): String {

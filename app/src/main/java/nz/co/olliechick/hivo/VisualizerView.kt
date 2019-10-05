@@ -48,7 +48,6 @@ class VisualizerView(context: Context, attrs: AttributeSet) : View(context, attr
                 val newX = vectors?.get(vectorIndex)!! - 1
                 vectors?.set(vectorIndex, newX) // x
                 vectorIndex += 2
-
             }
 
             // Add the new line  to the canvas by appending the points to [vectors]
