@@ -359,15 +359,20 @@ class MainActivity : AppCompatActivity() {
 
     // Saving audio
 
+    /**
+     * Saves WAV file of audio from [startClip] to [endClip], and adds entry to database.
+     */
     private fun saveWav(name: String, startClip: Calendar, endClip: Calendar) {
         toast(getString(R.string.saving))
 
         val start = Calendar.getInstance().apply { time = getStartTime(this@MainActivity) }
+        val end = Calendar.getInstance().apply { time = getEndTime(this@MainActivity) }
 
         val millisBeforeStart: Long = startClip.timeInMillis - start.timeInMillis
         val durationInMillis: Long = endClip.timeInMillis - startClip.timeInMillis
 
-        val saveSuccessful = saveWav(name, millisBeforeStart, durationInMillis, this)
+        val saveSuccessful = if (start == startClip && end == endClip) saveWav(name, this)
+        else saveWav(name, millisBeforeStart, durationInMillis, this)
 
         if (saveSuccessful) {
             doAsync {
@@ -380,6 +385,9 @@ class MainActivity : AppCompatActivity() {
         } else toast(getString(R.string.saving_failed))
     }
 
+    /**
+     * Opens save dialog, with (possible) filename input and start/stop time selection.
+     */
     @SuppressLint("InflateParams")
     private fun save() {
         view = layoutInflater.inflate(R.layout.save_filename_dialog, null)
