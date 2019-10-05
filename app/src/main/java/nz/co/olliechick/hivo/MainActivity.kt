@@ -488,6 +488,16 @@ class MainActivity : AppCompatActivity() {
                                 create()
                                 show()
                             }
+                        } else if (endClip.getTimeInMinutes() - startClip.getTimeInMinutes() > 6 * 60) {
+                            // Passes if clip is shorter than 6 hours
+                            validationDialogBuilder.apply {
+                                setMessage(getString(R.string.recordings_must_be_less_than_6_hrs))
+                                setPositiveButton(getString(R.string.ok)) { subDialog, _ ->
+                                    subDialog.dismiss()
+                                }
+                                create()
+                                show()
+                            }
                         } else if (nameExists) {
                             // Passes if name is unique (doesn't exist)
                             if (usesCustomFilename(this@MainActivity)) {

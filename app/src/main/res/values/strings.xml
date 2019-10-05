@@ -57,4 +57,5 @@
     <string name="start_time">Start time</string>
     <string name="end_time">End time</string>
     <string name="start_and_end_must_be_valid">The start must be between %1s and the end, and the end must be between the start and %2s.</string>
+    <string name="recordings_must_be_less_than_6_hrs">Recording must be shorter than 6 hours, for technical reasons.</string>
 </resources>
