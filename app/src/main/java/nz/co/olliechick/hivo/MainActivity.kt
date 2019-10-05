@@ -363,13 +363,6 @@ class MainActivity : AppCompatActivity() {
         toast(getString(R.string.saving))
 
         val start = Calendar.getInstance().apply { time = getStartTime(this@MainActivity) }
-        val end = Calendar.getInstance().apply { time = getEndTime(this@MainActivity) }
-
-        // Fix up seconds and millis
-        if (startClip.getTimeInMinutes() == start.getTimeInMinutes()) startClip.setSecondsAndMillis(start)
-        else startClip.zeroSecondsAndMillis()
-        if (endClip.getTimeInMinutes() == end.getTimeInMinutes()) endClip.setSecondsAndMillis(end)
-        else endClip.zeroSecondsAndMillis()
 
         val millisBeforeStart: Long = startClip.timeInMillis - start.timeInMillis
         val durationInMillis: Long = endClip.timeInMillis - startClip.timeInMillis
@@ -457,7 +450,13 @@ class MainActivity : AppCompatActivity() {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val validationDialogBuilder = AlertDialog.Builder(this)
                 doAsync {
-                    val name = getRecordingNameFromViewOrDefault()
+                    // Fix up seconds and millis
+                    if (startClip.getTimeInMinutes() == start.getTimeInMinutes()) startClip.setSecondsAndMillis(start)
+                    else startClip.zeroSecondsAndMillis()
+                    if (endClip.getTimeInMinutes() == end.getTimeInMinutes()) endClip.setSecondsAndMillis(end)
+                    else endClip.zeroSecondsAndMillis()
+
+                    val name = getRecordingNameFromViewOrDefault(startClip)
 
                     db = Database.initialiseDb(applicationContext)
                     val nameExists = db.recordingDao().nameExists(name)
@@ -522,12 +521,12 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun getRecordingNameFromViewOrDefault(): String {
+    private fun getRecordingNameFromViewOrDefault(start: Calendar): String {
         return if (usesCustomFilename(this)) {
             val inputName = view?.input?.text?.toString()
             if (inputName == null || inputName == "") getString(R.string.no_title)
             else inputName
-        } else getNameForRecording(this, getStartTime(this))!!
+        } else getNameForRecording(this, start.time)!!
     }
 
     private fun generateUniqueName(name: String): String =
