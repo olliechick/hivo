@@ -393,10 +393,10 @@ class MainActivity : AppCompatActivity() {
         view = layoutInflater.inflate(R.layout.save_filename_dialog, null)
 
         val start = Calendar.getInstance().apply { time = getStartTime(this@MainActivity) }
-        val end = Calendar.getInstance().apply { time = getEndTime(this@MainActivity) }
+        var end = Calendar.getInstance().apply { time = getEndTime(this@MainActivity) }
 
         /** True if the recording stopped in the same minute it started. */
-        val recordingAllInOneMinute = start.get(Calendar.MINUTE) == end.get(Calendar.MINUTE)
+        var recordingAllInOneMinute = start.get(Calendar.MINUTE) == end.get(Calendar.MINUTE)
 
         val startClip = start.clone() as Calendar
         val endClip = end.clone() as Calendar
@@ -458,6 +458,10 @@ class MainActivity : AppCompatActivity() {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val validationDialogBuilder = AlertDialog.Builder(this)
                 doAsync {
+                    // Update end time
+                    end = Calendar.getInstance().apply { time = getEndTime(this@MainActivity) }
+                    recordingAllInOneMinute = start.get(Calendar.MINUTE) == end.get(Calendar.MINUTE)
+
                     // Fix up seconds and millis
                     if (startClip.getTimeInMinutes() == start.getTimeInMinutes()) startClip.setSecondsAndMillis(start)
                     else startClip.zeroSecondsAndMillis()
