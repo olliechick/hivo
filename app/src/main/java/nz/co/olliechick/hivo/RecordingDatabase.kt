@@ -26,6 +26,16 @@ interface RecordingDao {
     @Transaction
     fun getSchedRecordings(): List<Recording> = getRecordingsEndingAfterTimestamp(Date().time)
 
+    @Query("SELECT * FROM recordings WHERE start_date < :timestamp AND end_date > :timestamp")
+    fun getRecordingsOccurringDuringTimestamp(timestamp: Long): List<Recording>
+
+    @Transaction
+    fun getCurrentlyOccurringScheduledRecording(): Recording? {
+        val recordings = getRecordingsOccurringDuringTimestamp(Date().time)
+        return if (recordings.isNotEmpty()) recordings[0]
+        else null
+    }
+
     @Query(
         """SELECT CASE WHEN EXISTS (SELECT 1 FROM recordings WHERE name = :name)
                         THEN CAST (1 AS BIT)

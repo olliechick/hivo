@@ -33,6 +33,7 @@ import nz.co.olliechick.hivo.util.Files.Companion.getRawFile
 import nz.co.olliechick.hivo.util.Files.Companion.saveWav
 import nz.co.olliechick.hivo.util.Preferences.Companion.getStartTime
 import nz.co.olliechick.hivo.util.Preferences.Companion.isOnboardingComplete
+import nz.co.olliechick.hivo.util.Recordings.Companion.cancelCurrentStopRecordingIntent
 import nz.co.olliechick.hivo.util.Recordings.Companion.startRecording
 import nz.co.olliechick.hivo.util.Recordings.Companion.stopRecording
 import nz.co.olliechick.hivo.util.StringProcessing.Companion.getNameForRecording
@@ -134,6 +135,7 @@ class MainActivity : AppCompatActivity() {
                     stopRecording(this)
                     recordingInProgress = false
                     stopPlayback()
+                    cancelCurrentStopRecordingIntent(applicationContext)
                 }
             }
             // if it's not pressed, then a scheduled recording starting or stopping triggered it to flip, so we don't

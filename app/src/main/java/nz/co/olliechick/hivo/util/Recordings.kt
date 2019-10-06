@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Build
 import nz.co.olliechick.hivo.Recording
 import nz.co.olliechick.hivo.RecordingService
+import org.jetbrains.anko.doAsync
 import java.util.*
 
 class Recordings {
@@ -38,6 +39,18 @@ class Recordings {
         fun stopRecording(context: Context) {
             val intent = Intent(context, RecordingService::class.java)
             context.stopService(intent)
+        }
+
+        fun cancelCurrentStopRecordingIntent(applicationContext: Context) {
+            doAsync {
+                val db = Database.initialiseDb(applicationContext)
+                val currentRecording = db.recordingDao().getCurrentlyOccurringScheduledRecording()
+                if (currentRecording != null) {
+                    currentRecording.cancel(applicationContext)
+                    db.recordingDao().delete(currentRecording)
+                }
+                db.close()
+            }
         }
     }
 }
