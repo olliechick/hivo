@@ -75,7 +75,10 @@ class MainActivity : AppCompatActivity() {
 
     private val recordingToggledReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == recordingStartedIntent) recordingInProgress = true
+            if (intent?.action == recordingStartedIntent) {
+                seekBar.clear()
+                recordingInProgress = true
+            }
             else if (intent?.action == recordingStoppedIntent) recordingInProgress = false
             recordingSwitch.isChecked = recordingInProgress
         }
@@ -129,6 +132,7 @@ class MainActivity : AppCompatActivity() {
         recordingSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
             if (buttonView.isPressed) {
                 if (isChecked) {
+                    seekBar.clear()
                     startRecording(this)
                     recordingInProgress = true
                 } else {

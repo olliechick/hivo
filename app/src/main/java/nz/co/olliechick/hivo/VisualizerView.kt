@@ -78,6 +78,10 @@ class VisualizerView(context: Context, attrs: AttributeSet) : View(context, attr
         }
     }
 
+    fun clear() {
+        vectors = FloatArray(this.screenWidth * 4)
+    }
+
     override fun onDraw(canvas: Canvas) {
         vectors?.run { canvas.drawLines(this, linePaint) }
     }
