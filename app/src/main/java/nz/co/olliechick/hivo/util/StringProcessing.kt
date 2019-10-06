@@ -1,7 +1,7 @@
 package nz.co.olliechick.hivo.util
 
 import android.content.Context
-import nz.co.olliechick.hivo.util.Preferences.Companion.getFilename
+import nz.co.olliechick.hivo.util.Preferences.Companion.getFilenameFormat
 import nz.co.olliechick.hivo.util.Preferences.Companion.getStartTime
 import java.text.SimpleDateFormat
 import java.util.*
@@ -42,9 +42,9 @@ class StringProcessing {
          * Example return: "2:59:35 PM, 1 Sep 2019"
          */
         fun getNameForRecording(context: Context, date: Date): String? {
-            val name = getFilename(context)
-            return if (name == null) null
-            else getDateString(FilenameFormat.valueOf(name), date)
+            val filenameFormat = getFilenameFormat(context)
+            return if (filenameFormat == FilenameFormat.SPECIFY_ON_SAVE) null
+            else getDateString(filenameFormat, date)
         }
 
         /**

@@ -2,6 +2,7 @@ package nz.co.olliechick.hivo.util
 
 import android.content.Context
 import androidx.preference.PreferenceManager
+import nz.co.olliechick.hivo.util.Constants.Companion.defaultFilenameFormat
 import java.util.*
 
 class Preferences {
@@ -32,7 +33,11 @@ class Preferences {
         fun getEndTime(context: Context): Date =
             Date().apply { time = getPrefs(context).getLong(Constants.endTimeKey, Date().time) }
 
-        fun getFilename(context: Context): String? = getPrefs(context).getString(Constants.filenameKey, null) ?: null
+        fun getFilenameFormat(context: Context): FilenameFormat {
+            val filenamePref = getPrefs(context).getString(Constants.filenameKey, defaultFilenameFormat.toString())
+            return if (filenamePref == null) defaultFilenameFormat
+            else FilenameFormat.valueOf(filenamePref)
+        }
 
         fun isOnboardingComplete(context: Context): Boolean =
             getPrefs(context).getBoolean(Constants.onboardingCompleteKey, false)

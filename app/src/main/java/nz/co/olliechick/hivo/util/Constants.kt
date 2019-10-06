@@ -24,6 +24,7 @@ class Constants {
 
         // Default values
         const val defaultBuffer = 60 //minutes
+        val defaultFilenameFormat = FilenameFormat.READABLE
 
         // Audio
         const val samplingRateHz = 44100
