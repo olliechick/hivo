@@ -30,6 +30,7 @@ import nz.co.olliechick.hivo.util.Constants.Companion.recordingStartedIntent
 import nz.co.olliechick.hivo.util.Constants.Companion.recordingStoppedIntent
 import nz.co.olliechick.hivo.util.Constants.Companion.samplingRateHz
 import nz.co.olliechick.hivo.util.Files.Companion.getRawFile
+import nz.co.olliechick.hivo.util.Files.Companion.rawFileExists
 import nz.co.olliechick.hivo.util.Files.Companion.saveWav
 import nz.co.olliechick.hivo.util.Preferences.Companion.getStartTime
 import nz.co.olliechick.hivo.util.Preferences.Companion.isOnboardingComplete
@@ -78,8 +79,7 @@ class MainActivity : AppCompatActivity() {
             if (intent?.action == recordingStartedIntent) {
                 seekBar.clear()
                 recordingInProgress = true
-            }
-            else if (intent?.action == recordingStoppedIntent) recordingInProgress = false
+            } else if (intent?.action == recordingStoppedIntent) recordingInProgress = false
             recordingSwitch.isChecked = recordingInProgress
         }
     }
@@ -132,10 +132,27 @@ class MainActivity : AppCompatActivity() {
         recordingSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
             if (buttonView.isPressed) {
                 if (isChecked) {
-                    seekBar.clear()
-                    startRecording(this)
-                    recordingInProgress = true
-                } else {
+                    if (rawFileExists(this)) {
+                        AlertDialog.Builder(this).apply {
+                            setMessage("You are about to overwrite what was last listened to (unless it was saved). Are you sure you want to do this?")
+                            setPositiveButton(getString(R.string.yes)) { subDialog, _ ->
+                                subDialog.dismiss()
+                                seekBar.clear()
+                                startRecording(this@MainActivity)
+                                recordingInProgress = true
+                            }
+                            setNegativeButton(getString(R.string.cancel)) { subDialog, _ ->
+                                subDialog.dismiss()
+                            }
+                            create()
+                            show()
+                        }
+                    } else { // First ever time turning this on
+                        seekBar.clear()
+                        startRecording(this)
+                        recordingInProgress = true
+                    }
+                } else { // Switch was turned off
                     stopRecording(this)
                     recordingInProgress = false
                     stopPlayback()
@@ -457,7 +474,6 @@ class MainActivity : AppCompatActivity() {
 
             create()
         }
-
 
         // Override positive button, so that it only dismisses if validation passes
         dialog.setOnShowListener {
