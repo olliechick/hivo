@@ -142,10 +142,11 @@ class MainActivity : AppCompatActivity() {
                                 recordingInProgress = true
                             }
                             setNegativeButton(getString(R.string.cancel)) { subDialog, _ ->
+                                recordingSwitch.isChecked = false // turn if back off
                                 subDialog.dismiss()
                             }
                             create()
-                            show()
+                            show().setCanceledOnTouchOutside(false)
                         }
                     } else { // First ever time turning this on
                         seekBar.clear()
