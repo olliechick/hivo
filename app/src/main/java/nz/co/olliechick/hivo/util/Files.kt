@@ -23,26 +23,7 @@ import java.nio.ByteOrder
 class Files {
     companion object {
 
-        @Throws(IOException::class)
-        fun writeInt(output: FileOutputStream, value: Int) {
-            output.write(value shr 0)
-            output.write(value shr 8)
-            output.write(value shr 16)
-            output.write(value shr 24)
-        }
-
-        @Throws(IOException::class)
-        fun writeShort(output: FileOutputStream, value: Short) {
-            output.write(value.toInt() shr 0)
-            output.write(value.toInt() shr 8)
-        }
-
-        @Throws(IOException::class)
-        fun writeString(output: FileOutputStream, value: String) {
-            for (element in value) {
-                output.write(element.toInt())
-            }
-        }
+        // Getters
 
         /**
          * Returns the directory (external storage)/HiVo recordings
@@ -54,6 +35,14 @@ class Files {
         ).apply { mkdirs() }
 
         private fun getPrivateDirectory(context: Context): File = context.filesDir
+
+        fun getRawFile(context: Context) = File(getPrivateDirectory(context), "recording.wav")
+
+        private fun getLocationForCroppedFile(context: Context) = File(getPrivateDirectory(context), "cropped.wav")
+
+        fun rawFileExists(context: Context) = getRawFile(context).exists()
+
+        // Saving WAVs
 
         /**
          * Crops audio from the raw file to start at [millisBeforeStart] ms into the recording,
@@ -125,8 +114,7 @@ class Files {
             }
         }
 
-        fun getRawFile(context: Context) = File(getPrivateDirectory(context), "recording.wav")
-        private fun getLocationForCroppedFile(context: Context) = File(getPrivateDirectory(context), "cropped.wav")
+        // Open files
 
         /**
          * Launches an implicit intent to open the audio file at (external storage)/HiVo recordings/[recordingName].wav
@@ -149,6 +137,7 @@ class Files {
             }
         }
 
+        // Headers
 
         fun writeHeaders(output: FileOutputStream) {
             // see https://web.archive.org/web/20141213140451/https://ccrma.stanford.edu/courses/422/projects/WaveFormat/
@@ -201,6 +190,29 @@ class Files {
                 throw e
             } finally {
                 accessWave?.close()
+            }
+        }
+
+        // Writing primitives to streams
+
+        @Throws(IOException::class)
+        fun writeInt(output: FileOutputStream, value: Int) {
+            output.write(value shr 0)
+            output.write(value shr 8)
+            output.write(value shr 16)
+            output.write(value shr 24)
+        }
+
+        @Throws(IOException::class)
+        fun writeShort(output: FileOutputStream, value: Short) {
+            output.write(value.toInt() shr 0)
+            output.write(value.toInt() shr 8)
+        }
+
+        @Throws(IOException::class)
+        fun writeString(output: FileOutputStream, value: String) {
+            for (element in value) {
+                output.write(element.toInt())
             }
         }
     }
