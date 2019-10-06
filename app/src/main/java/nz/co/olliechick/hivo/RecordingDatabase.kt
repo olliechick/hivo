@@ -14,13 +14,13 @@ interface RecordingDao {
     @Delete
     fun delete(recording: Recording)
 
-    @Query("SELECT * FROM recordings WHERE end_date < :timestamp")
+    @Query("SELECT * FROM recordings WHERE end_date < :timestamp ORDER BY start_date ASC")
     fun getRecordingsEndingBeforeTimestamp(timestamp: Long): List<Recording>
 
     @Transaction
     fun getPastRecordings(): List<Recording> = getRecordingsEndingBeforeTimestamp(Date().time)
 
-    @Query("SELECT * FROM recordings WHERE end_date > :timestamp")
+    @Query("SELECT * FROM recordings WHERE end_date > :timestamp ORDER BY start_date ASC")
     fun getRecordingsEndingAfterTimestamp(timestamp: Long): List<Recording>
 
     @Transaction
