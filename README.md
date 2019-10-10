@@ -1,7 +1,5 @@
 # HiVo
 
-# HiVo
-
 HiVo is an app that can continuously record audio in the background, 
 then gives you the ability to save a portion of it when something interesting happens.
 You can also schedule recordings to happen at some point in the future.
