@@ -235,7 +235,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         R.id.past_recordings -> {
-            val intent = Intent(this, PastRecordingActivity::class.java)
+            val intent = Intent(this, PastRecordingsActivity::class.java)
             startActivity(intent)
             true
         }

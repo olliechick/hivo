@@ -12,7 +12,7 @@ import org.jetbrains.anko.uiThread
 import java.util.*
 
 
-class PastRecordingActivity : AppCompatActivity() {
+class PastRecordingsActivity : AppCompatActivity() {
 
     private lateinit var db: RecordingDatabase
 
@@ -33,7 +33,7 @@ class PastRecordingActivity : AppCompatActivity() {
         list.addOnItemTouchListener(
             RecyclerItemClickListener(this, list, object : RecyclerItemClickListener.OnItemClickListener {
                 override fun onItemClick(view: View, position: Int) {
-                    launchImplicitAudioIntent(this@PastRecordingActivity, recordings[position].name)
+                    launchImplicitAudioIntent(this@PastRecordingsActivity, recordings[position].name)
 
                 }
 

@@ -21,7 +21,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="nz.co.olliechick.hivo.MainActivity" />
         </activity>
-        <activity android:name=".PastRecordingActivity">
+        <activity android:name=".PastRecordingsActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="nz.co.olliechick.hivo.MainActivity" />
